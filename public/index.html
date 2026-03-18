@@ -1,0 +1,1312 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dreinn.converter v1.2</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@700;800&family=Unbounded:wght@400;700;900&family=Oswald:wght@400;600;700&family=Bebas+Neue&family=Rajdhani:wght@500;600;700&family=Exo+2:wght@400;600;700;800&family=Orbitron:wght@400;700;900&family=Press+Start+2P&family=Seymour+One&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="./vendor/lottie.min.js"></script>
+<script src="./vendor/gif.js"></script>
+</head>
+<body>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<div class="titlebar">
+  <div class="tb-logo">dreinn.converter</div>
+  
+  <span class="tb-ver">v1.2</span>
+  <a class="tb-link" href="https://michielp1807.github.io/lottie-editor/#/editor" target="_blank" rel="noopener">TGS → JSON конвертер</a>
+  <a class="tb-link tg-link" href="https://t.me/dreinnh" target="_blank" rel="noopener">Telegram: t.me/dreinnh</a>
+  <div class="tb-wm">
+    <div class="tb-dot min"></div>
+    <div class="tb-dot max"></div>
+    <div class="tb-dot close"></div>
+  </div>
+</div>
+
+<div class="workspace">
+<div class="sidebar">
+
+  <!-- FILE DROP -->
+  <div>
+    <div class="sec">Файл эмодзи</div>
+    <div class="file-drop" id="fileDrop">
+      <input type="file" id="fileInput" accept=".json,.tgs">
+      <span class="fd-ico" id="fdIco">FILE</span>
+      <div class="fd-name" id="fdName">Нет файла</div>
+      <div class="fd-meta" id="fdMeta">Перетащите .json или .tgs</div>
+      <div class="fd-hint">или нажмите для выбора</div>
+    </div>
+  </div>
+  <div class="div"></div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab" data-tab="import">Import</button>
+    <button class="tab active" data-tab="text">Текст</button>
+    <button class="tab" data-tab="recolor">Цвет</button>
+    <button class="tab" data-tab="bg">Фон</button>
+    <button class="tab" data-tab="export">Экспорт</button>
+  </div>
+
+  <!-- ══ TEXT ══ -->
+  <div class="tab-panel" id="tab-import">
+    <div class="import-box">
+      <div class="sec">Telegram Pack Import</div>
+      <div class="import-grid">
+        <div>
+          <div class="plbl">Pack URL</div>
+          <div class="inp-wrap" style="margin-bottom:8px">
+            <span class="inp-ico">URL</span>
+            <input type="text" id="tgPackUrl" placeholder="https://t.me/addemoji/... or https://t.me/addstickers/...">
+          </div>
+          <div class="plbl">Bot Token (optional, or use TELEGRAM_BOT_TOKEN env)</div>
+          <div class="inp-wrap" style="margin-bottom:8px">
+            <span class="inp-ico">TOKEN</span>
+            <input type="password" id="tgBotToken" placeholder="123456:ABC...">
+          </div>
+          <button class="btn btn-blue" id="tgLoadPack">Load Pack</button>
+          <div class="fpick-sub" id="tgPackMeta" style="margin-top:8px">Paste link and click Load Pack</div>
+        </div>
+        <div>
+          <div class="plbl">Sticker / Emoji List</div>
+          <div class="pack-list pack-list-lg" id="tgPackList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel active" id="tab-text">
+    <div>
+      <div class="sec">Шрифт</div>
+      <div class="sel-wrap">
+        <span class="sel-ico">FONT</span>
+        <select id="fontSelect">
+          <option value="Montserrat">Montserrat</option>
+          <option value="Unbounded">Unbounded</option>
+          <option value="'Space Grotesk'">Space Grotesk</option>
+          <option value="'Exo 2'">Exo 2</option>
+          <option value="Syne">Syne</option>
+          <option value="Orbitron">Orbitron</option>
+          <option value="Oswald">Oswald</option>
+          <option value="Rajdhani">Rajdhani</option>
+          <option value="'Bebas Neue'">Bebas Neue</option>
+          <option value="'Press Start 2P'">Press Start 2P</option>
+          <option value="Impact">Impact</option>
+          <option value="'Seymour One'">Seymour One</option>
+          <option value="Georgia">Georgia</option>
+        </select>
+        <span style="color:var(--green2);font-size:13px">OK</span>
+      </div>
+    </div>
+    <div>
+      <div class="sec">Слои <span class="badge" id="layerCount" style="margin-left:5px">0</span></div>
+      <div class="layers-list" id="layersList"></div>
+      <div style="margin-top:7px"><button class="btn btn-ghost btn-sm" id="addLayerBtn"> Добавить слой</button></div>
+    </div>
+    <div id="layerEditor" style="display:none">
+      <div class="sec">Редактор слоя</div>
+      <div class="inp-wrap" style="margin-bottom:8px">
+        <span class="inp-ico">TEXT</span>
+        <input type="text" id="textInput" placeholder="Введите текст..." maxlength="60">
+        <span class="inp-cnt" id="textCounter">0/60</span>
+      </div>
+      <div class="prow" style="margin-bottom:8px">
+        <div class="pi">
+          <div class="plbl">Цвет</div>
+          <div class="clr-wrap" id="colorWrap">
+            <input type="color" id="colorInput" value="#ffffff">
+            <div class="clr-sw" id="colorSwatch"></div>
+            <input class="clr-hex" id="colorHexEdit" maxlength="7" value="#FFFFFF">
+          </div>
+        </div>
+        <div class="pi">
+          <div class="plbl">Размер</div>
+          <div class="num-wrap"><input type="number" id="sizeInput" value="32" min="6" max="200"><span class="num-unit">px</span></div>
+        </div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div class="plbl">Обводка</div>
+        <div class="prow">
+          <div class="pi">
+            <div class="clr-wrap" id="strokeColorWrap">
+              <input type="color" id="strokeColorInput" value="#000000">
+              <div class="clr-sw" id="strokeSwatch"></div>
+              <input class="clr-hex" id="strokeHexEdit" maxlength="7" value="#000000">
+            </div>
+          </div>
+          <div class="pi">
+            <div class="num-wrap"><input type="number" id="strokeWidth" value="0" min="0" max="20"><span class="num-unit">px</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div class="plbl">Стиль</div>
+        <div class="align-btns">
+          <button class="align-btn" data-align="left" title="Лево"></button>
+          <button class="align-btn active" data-align="center" title="Центр"></button>
+          <button class="align-btn" data-align="right" title="Право"></button>
+          <button class="align-btn" id="boldBtn" data-weight="bold" title="Жирный"></button>
+          <button class="align-btn" data-weight="normal" title="Обычный"></button>
+          <button class="align-btn" id="shadowBtn" title="Тень"></button>
+          <button class="align-btn" id="behindBtn" title="За объектом — текст под стикером"></button>
+        </div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div class="plbl">Text Motion</div>
+        <div class="prow" style="margin-bottom:6px">
+          <div class="pi">
+            <div class="plbl">Horizontal: <span id="motionXLabel">0%</span></div>
+            <input type="range" id="motionX" min="-40" max="40" value="0">
+          </div>
+          <div class="pi">
+            <div class="plbl">Vertical: <span id="motionYLabel">0%</span></div>
+            <input type="range" id="motionY" min="-40" max="40" value="0">
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="applyBtn"> Применить</button>
+  </div>
+
+  <!-- ══ RECOLOR ══ -->
+  <div class="tab-panel" id="tab-recolor">
+    <div>
+          <div class="sec">Авто-перекрас схемы</div>
+      <div class="auto-rc">
+        <div class="auto-rc-hint">Выберите исходный цвет и новый. Все похожие оттенки (тени, блики) заменятся пропорционально.</div>
+        <div class="prow">
+          <div class="pi">
+            <div class="plbl">Исходный</div>
+            <div class="clr-wrap" id="autoSrcWrap"><input type="color" id="autoSrcInput" value="#7c3aed"><div class="clr-sw" id="autoSrcSwatch"></div><input class="clr-hex" id="autoSrcHex" maxlength="7" value="#7C3AED"></div>
+          </div>
+          <div class="pi">
+            <div class="plbl">Новый</div>
+            <div class="clr-wrap" id="autoTgtWrap"><input type="color" id="autoTgtInput" value="#059669"><div class="clr-sw" id="autoTgtSwatch"></div><input class="clr-hex" id="autoTgtHex" maxlength="7" value="#059669"></div>
+          </div>
+        </div>
+        <div>
+          <div class="plbl">Допуск: <span id="autoTolLabel">45°</span></div>
+          <input type="range" id="autoTolerance" min="10" max="90" value="45">
+        </div>
+        <button class="btn btn-primary btn-sm" id="applyAutoRecolor">Авто-применить</button>
+      </div>
+    </div>
+    <div>
+      <div class="sec">Ручной выбор</div>
+      <div>
+        <div class="plbl">Режим</div>
+        <div class="mode-toggle">
+          <button class="mode-btn active" data-mode="smart">Smart</button>
+          <button class="mode-btn" data-mode="hue">Тон</button>
+          <button class="mode-btn" data-mode="solid">Прямой</button>
+        </div>
+      </div>
+      <div>
+        <div class="plbl">Цвета эмодзи <span id="colorCountBadge" style="color:var(--text3);font-size:10px">(загрузите файл)</span></div>
+        <div class="recolor-swatches" id="recolorSwatches"></div>
+      </div>
+      <div id="recolorTarget" style="display:none">
+        <div class="recolor-box">
+          <div class="prow">
+            <div class="pi">
+              <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Оригинал</div>
+              <div class="clr-sw" id="origColorSwatch" style="width:40px;height:40px;border-radius:9px"></div>
+            </div>
+            <div class="pi">
+              <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Новый</div>
+              <div class="clr-wrap" id="newColorWrap" style="height:44px">
+                <input type="color" id="newColorInput" value="#ff0000">
+                <div class="clr-sw" id="newColorSwatch" style="width:22px;height:22px"></div>
+                <input class="clr-hex" id="newColorHexEdit" maxlength="7" value="#FF0000">
+              </div>
+            </div>
+          </div>
+          <div id="hueModeUI" style="display:none">
+            <div class="plbl">Сдвиг тона</div>
+            <div class="hue-wrap"><div class="hue-bar" id="hueBar"><div class="hue-thumb" id="hueThumb"></div></div></div>
+            <div style="display:flex;justify-content:space-between;margin-top:5px"><span style="font-size:10px;color:var(--text3)">0°</span><span style="font-size:11px;font-weight:700;color:var(--p3)" id="hueValLabel">0°</span><span style="font-size:10px;color:var(--text3)">360°</span></div>
+            <div class="plbl" style="margin-top:6px">Насыщенность</div>
+            <input type="range" id="satSlider" min="0" max="200" value="100">
+            <div class="plbl" style="margin-top:6px">Яркость</div>
+            <input type="range" id="valSlider" min="0" max="200" value="100">
+          </div>
+          <div style="display:flex;gap:7px">
+            <button class="btn btn-primary btn-sm" id="applyRecolorBtn" style="flex:2"> Применить</button>
+            <button class="btn btn-ghost btn-sm" id="resetOneBtn" style="flex:1" title="Сбросить этот цвет"></button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:7px">
+        <button class="btn btn-ghost btn-sm" id="resetAllBtn">Сброс всего</button>
+        <button class="btn btn-primary btn-sm" id="reExtractBtn">Обновить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ BG ══ -->
+  <div class="tab-panel" id="tab-bg">
+    <div class="sec">Фон превью</div>
+    <div style="font-size:10px;color:var(--text2);line-height:1.6;margin-bottom:5px">Фон отображается в превью и попадает в экспорт PNG / GIF.</div>
+    <div>
+      <div class="plbl">Пресеты</div>
+      <div class="bg-presets" id="bgPresets"></div>
+    </div>
+    <div>
+      <div class="plbl">Свой цвет</div>
+      <div class="clr-wrap" id="bgColorWrap"><input type="color" id="bgColorInput" value="#111118"><div class="clr-sw" id="bgColorSwatch"></div><input class="clr-hex" id="bgHexEdit" maxlength="7" value="#111118"></div>
+    </div>
+    <div>
+      <div class="plbl">Прозрачность</div>
+      <input type="range" id="bgOpacity" min="0" max="100" value="100">
+      <div style="display:flex;justify-content:space-between;margin-top:3px"><span style="font-size:10px;color:var(--text3)">0%</span><span style="font-size:10px;font-weight:700;color:var(--p3)" id="bgOpacityLabel">100%</span><span style="font-size:10px;color:var(--text3)">100%</span></div>
+    </div>
+    <div>
+      <div class="plbl">Тип</div>
+      <div class="mode-toggle">
+        <button class="mode-btn active" data-bgtype="solid">Solid</button>
+        <button class="mode-btn" data-bgtype="gradient">Gradient</button>
+        <button class="mode-btn" data-bgtype="transparent">None</button>
+      </div>
+    </div>
+    <div id="gradientUI" style="display:none">
+      <div class="plbl">Второй цвет</div>
+      <div class="clr-wrap" id="bgColor2Wrap"><input type="color" id="bgColor2Input" value="#7c3aed"><div class="clr-sw" id="bgColor2Swatch"></div><input class="clr-hex" id="bgHex2Edit" maxlength="7" value="#7C3AED"></div>
+      <div class="plbl" style="margin-top:7px">Угол: <span id="gradAngleLabel">135°</span></div>
+      <input type="range" id="gradAngle" min="0" max="360" value="135">
+    </div>
+    <button class="btn btn-primary btn-sm" id="applyBgBtn"> Применить фон</button>
+  </div>
+
+  <!-- ══ EXPORT ══ -->
+  <div class="tab-panel" id="tab-export">
+    <div class="sec">Разрешение</div>
+    <div class="prow" style="margin-bottom:8px">
+      <div class="pi"><div class="plbl">Ширина</div><div class="num-wrap"><input type="number" id="exportWidth" value="512" min="64" max="4096"><span class="num-unit">px</span></div></div>
+      <div class="pi"><div class="plbl">Высота</div><div class="num-wrap"><input type="number" id="exportHeight" value="512" min="64" max="4096"><span class="num-unit">px</span></div></div>
+    </div>
+    <div>
+      <div class="plbl">Быстрые размеры</div>
+      <div class="size-chips" id="sizeChips">
+        <span class="size-chip active" data-w="512" data-h="512">512×512</span>
+        <span class="size-chip" data-w="1920" data-h="530">1920×530</span>
+        <span class="size-chip" data-w="800" data-h="800">800×800</span>
+        <span class="size-chip" data-w="1080" data-h="1080">1080×1080</span>
+        <span class="size-chip" data-w="1920" data-h="1080">1920×1080</span>
+        <span class="size-chip" data-w="256" data-h="256">256×256</span>
+      </div>
+    </div>
+    <div class="sec" style="margin-top:4px">PNG — выбор кадра</div>
+    <div class="fpick">
+      <div class="fpick-row"><span class="fpick-lbl">Кадр</span><span class="fpick-time" id="pngFrameTime">0.00s</span></div>
+      <input type="range" id="pngFrameSlider" min="0" max="100" value="0" step="1">
+      <div class="fpick-sub" id="pngFrameInfo">Загрузите файл</div>
+    </div>
+    <button class="btn btn-blue btn-sm" id="exportPng"> Экспорт PNG</button>
+    <div class="sec" style="margin-top:4px">Sticker</div>
+    <div class="fpick">
+      <div class="plbl">Sticker Scale: <span id="stickerScaleLabel">100%</span></div>
+      <input type="range" id="stickerScale" min="30" max="220" value="100">
+    </div>
+    <div class="sec">GIF</div>
+    <div class="btn-row">
+      <button class="btn btn-amber btn-sm" id="exportGif"> Экспорт GIF</button>
+      
+    </div>
+    <div class="sec">Данные</div>
+    <div class="btn-row">
+      <button class="btn btn-blue btn-sm" id="exportJson">JSON</button>
+      <button class="btn btn-green btn-sm" id="exportTgs">TGS</button>
+    </div>
+    <div class="status-bar" id="statusBar"> Готово - можно сохранять</div>
+  </div>
+
+</div><!-- /sidebar -->
+
+<div class="preview-panel">
+  <div class="preview-header">
+    <span class="prev-lbl">Предпросмотр</span>
+    <span class="prev-frame" id="frameCounter">0 / 0</span>
+  </div>
+  <div class="preview-canvas-wrap">
+    <div class="stage" id="stage">
+      <div id="bg-layer"></div>
+      <div id="text-back"></div>
+      <div id="lottie-container"></div>
+      <div id="static-container"></div>
+      <div id="text-front"></div>
+      <div class="empty-state" id="emptyState">
+            <div class="empty-ico"></div>
+            <div class="empty-txt">Загрузите файл эмодзи</div>
+          </div>
+    </div>
+  </div>
+  <div class="transport">
+    <div class="prog-wrap" id="progWrap">
+      <div class="prog-bar" id="progBar"></div>
+      <div class="prog-thumb" id="progThumb"></div>
+    </div>
+    <div class="transport-row">
+      <div class="t-btns">
+        <button class="t-btn" id="tFirst">|&lt;</button>
+        <button class="t-btn play-btn" id="tPlay">Play</button>
+        <button class="t-btn" id="tLast">&gt;|</button>
+      </div>
+      <div class="t-info-row">
+        <span class="t-info" id="tFps">— fps</span>
+        <span class="t-info" id="tTime">0.00s</span>
+        <span class="t-info" id="tPct">0%</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Export Overlay -->
+<div class="export-overlay" id="exportOverlay">
+  <div class="export-modal">
+    <div class="em-spin" id="emSpin"></div>
+    <div class="em-title" id="emTitle">Экспорт...</div>
+    <div class="em-sub" id="emSub">Подготовка...</div>
+    <div class="em-pw"><div class="em-pb" id="emPb"></div></div>
+    <div class="em-pct" id="emPct">0%</div>
+    <button class="em-cancel" id="emCancel"> Отмена</button>
+  </div>
+</div>
+
+<script>
+// ╔══════════════════════════════════════════════════╗
+//   dreinn.converter v1.2
+// ╚══════════════════════════════════════════════════╝
+
+const $ = id => document.getElementById(id);
+
+const setPlayButton = (isPlaying) => {
+  $('tPlay').textContent = isPlaying ? 'Pause' : 'Play';
+};
+
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+const getAnimProgress = (frameIdx) => {
+  if (!S.totalFrames) return 0;
+  const f = Number.isFinite(frameIdx) ? frameIdx : (S.anim ? S.anim.currentFrame : 0);
+  return (f % S.totalFrames) / S.totalFrames;
+};
+const getLayerRenderPos = (layer, frameIdx) => {
+  const p = getAnimProgress(frameIdx);
+  const x = clamp(layer.x + (layer.motionX || 0) * Math.sin(p * Math.PI * 2), 0, 100);
+  const y = clamp(layer.y + (layer.motionY || 0) * Math.cos(p * Math.PI * 2), 0, 100);
+  return { x, y };
+};
+const applyStickerScale = () => {
+  const lottieEl = $('lottie-container');
+  const staticEl = $('static-container');
+  [lottieEl, staticEl].forEach((el)=>{
+    if (!el) return;
+    el.style.transformOrigin = '50% 50%';
+    el.style.transform = 'scale(' + S.stickerScale + ')';
+  });
+};
+
+const S = {
+  lottieData: null,     // original JSON
+  currentData: null,    // recolored JSON
+  anim: null,           // main preview anim (SVG renderer)
+  playing: false,
+  totalFrames: 0, fps: 60,
+  layers: [], activeId: null,
+  stageW: 512, stageH: 512, stageSize: 512,
+  dragging: null,
+  extractedColors: [], selectedColorIdx: null,
+  recolorMap: {}, recolorMode: 'smart',
+  bgColor: '#111118', bgColor2: '#7c3aed', bgOpacity: 1, bgType: 'solid', bgAngle: 135,
+  exportWidth: 512, exportHeight: 512,
+  cancelled: false, pngFrame: 0,
+  stickerScale: 1,
+  staticImageDataUrl: "",
+  staticFileName: "",
+  packPreviewAnims: [],
+};
+
+// ── COLOR MATH ──────────────────────────────────────────
+function hexToRgb(h) { h=h.replace('#',''); if(h.length===3)h=h.split('').map(c=>c+c).join(''); const n=parseInt(h,16); return{r:(n>>16)&255,g:(n>>8)&255,b:n&255} }
+function rgbToHex(r,g,b){ return '#'+[r,g,b].map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,'0')).join('').toUpperCase() }
+function rgbToHsl(r,g,b){ r/=255;g/=255;b/=255; const mx=Math.max(r,g,b),mn=Math.min(r,g,b); let h,s,l=(mx+mn)/2; if(mx===mn){h=s=0}else{const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);switch(mx){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;default:h=(r-g)/d+4}h/=6} return{h:h*360,s:s*100,l:l*100} }
+function hslToRgb(h,s,l){ h/=360;s/=100;l/=100; if(s===0){const v=Math.round(l*255);return{r:v,g:v,b:v}} const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q,hue=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<.5)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p}; return{r:Math.round(hue(p,q,h+1/3)*255),g:Math.round(hue(p,q,h)*255),b:Math.round(hue(p,q,h-1/3)*255)} }
+const hexToHsl = h => { const {r,g,b}=hexToRgb(h); return rgbToHsl(r,g,b) };
+const hslToHex = (h,s,l) => { const {r,g,b}=hslToRgb(h,s,l); return rgbToHex(r,g,b) };
+const hueDist  = (a,b) => { const d=Math.abs(a-b); return Math.min(d,360-d) };
+
+function smartRemap(origHex, svgHex, tgtHex, mode, hueShift, satMult, valMult) {
+  const orig=hexToHsl(origHex), svg=hexToHsl(svgHex), tgt=hexToHsl(tgtHex);
+  const dist=hueDist(orig.h, svg.h);
+  if (mode==='smart') {
+    if (dist>45) return null;
+    const lD=svg.l-orig.l, sR=orig.s>1?svg.s/orig.s:1;
+    return hslToHex(tgt.h, Math.max(0,Math.min(100,tgt.s*Math.min(sR,1.8))), Math.max(2,Math.min(97,tgt.l+lD)));
+  }
+  if (mode==='hue') {
+    if (dist>50) return null;
+    return hslToHex(((svg.h+hueShift)%360+360)%360, Math.max(0,Math.min(100,svg.s*satMult)), Math.max(2,Math.min(97,svg.l*valMult)));
+  }
+  if (mode==='solid') {
+    if (dist>30) return null;
+    return hslToHex(tgt.h, Math.max(0,Math.min(100,tgt.s+(svg.s-orig.s)*.5)), Math.max(2,Math.min(97,tgt.l+(svg.l-orig.l)*.7)));
+  }
+  return null;
+}
+
+// ── JSON COLOR EXTRACT ───────────────────────────────────
+function extractColors(data) {
+  const seen=new Map();
+  const addArr=a=>{ if(!Array.isArray(a)||a.length<3)return; const hex=rgbToHex(Math.round(a[0]*255),Math.round(a[1]*255),Math.round(a[2]*255)); if(!seen.has(hex))seen.set(hex,hex) };
+  const procC=c=>{ if(!c)return; if(typeof c.a==='number'&&c.a===0)addArr(c.k); else if(Array.isArray(c.k))c.k.forEach(kf=>{if(kf&&kf.s)addArr(kf.s);if(kf&&kf.e)addArr(kf.e)}); else addArr(c.k) };
+  const procShapes=sh=>{ if(!Array.isArray(sh))return; sh.forEach(s=>{ if(s.ty==='fl'||s.ty==='st')procC(s.c); if(s.ty==='gr'&&s.it)procShapes(s.it); if(s.shapes)procShapes(s.shapes) }) };
+  const procLayers=ls=>{ if(!Array.isArray(ls))return; ls.forEach(l=>{ if(l.shapes)procShapes(l.shapes); if(l.layers)procLayers(l.layers) }) };
+  procLayers(data.layers);
+  if(data.assets)data.assets.forEach(a=>{if(a.layers)procLayers(a.layers)});
+  return [...seen.values()];
+}
+
+// ── JSON COLOR REWRITE ───────────────────────────────────
+function applyRecolorToJSON(data, colorMap) {
+  if (!Object.keys(colorMap).length) return data;
+  const copy=JSON.parse(JSON.stringify(data));
+  const remapArr=a=>{ if(!Array.isArray(a)||a.length<3)return; const hex=rgbToHex(Math.round(a[0]*255),Math.round(a[1]*255),Math.round(a[2]*255)); for(const[oHex,rule]of Object.entries(colorMap)){const r=typeof rule==='object'?rule:{target:rule,mode:'smart',hueShift:0,satMult:1,valMult:1}; const rm=smartRemap(oHex,hex,r.target,r.mode,r.hueShift||0,r.satMult||1,r.valMult||1); if(rm){const{r:nr,g:ng,b:nb}=hexToRgb(rm);a[0]=nr/255;a[1]=ng/255;a[2]=nb/255;break}} };
+  const procC=c=>{ if(!c)return; if(typeof c.a==='number'&&c.a===0)remapArr(c.k); else if(Array.isArray(c.k))c.k.forEach(kf=>{if(kf&&kf.s)remapArr(kf.s);if(kf&&kf.e)remapArr(kf.e)}); else remapArr(c.k) };
+  const procShapes=sh=>{ if(!Array.isArray(sh))return; sh.forEach(s=>{ if(s.ty==='fl'||s.ty==='st')procC(s.c); if(s.ty==='gr'&&s.it)procShapes(s.it); if(s.shapes)procShapes(s.shapes) }) };
+  const procLayers=ls=>{ if(!Array.isArray(ls))return; ls.forEach(l=>{ if(l.shapes)procShapes(l.shapes); if(l.layers)procLayers(l.layers) }) };
+  procLayers(copy.layers); if(copy.assets)copy.assets.forEach(a=>{if(a.layers)procLayers(a.layers)});
+  return copy;
+}
+
+// ── STAGE SIZE ───────────────────────────────────────────
+function updateStageSize() {
+  const wrap=document.querySelector('.preview-canvas-wrap');
+  const mw=wrap.clientWidth-40, mh=wrap.clientHeight-40;
+  const sz=Math.max(200,Math.min(520,Math.min(mw,mh)));
+  $('stage').style.width=sz+'px'; $('stage').style.height=sz+'px';
+  S.stageW=S.stageH=S.stageSize=sz;
+}
+function updateStageForExport(ew, eh) {
+  const wrap=document.querySelector('.preview-canvas-wrap');
+  const mw=wrap.clientWidth-40, mh=wrap.clientHeight-40;
+  const ratio=ew/eh; let sw,sh;
+  if (ratio>=mw/mh) { sw=Math.min(mw,520); sh=Math.round(sw/ratio); }
+  else               { sh=Math.min(mh,520); sw=Math.round(sh*ratio); }
+  sw=Math.max(100,sw); sh=Math.max(100,sh);
+  $('stage').style.width=sw+'px'; $('stage').style.height=sh+'px';
+  S.stageW=sw; S.stageH=sh; S.stageSize=Math.min(sw,sh);
+  setTimeout(()=>renderAllTextNodes(),480);
+}
+window.addEventListener('resize',()=>{ updateStageSize(); renderAllTextNodes() });
+updateStageSize();
+
+// FILE LOADING / IMPORT
+const STORAGE_KEY='dreinn.converter.project.v1';
+let saveProjectTimer=null;
+
+function markDirty(){
+  clearTimeout(saveProjectTimer);
+  saveProjectTimer=setTimeout(saveProject,320);
+}
+
+document.addEventListener('input',()=>markDirty());
+
+function snapshotState(){
+  return {
+    lottieData:S.lottieData,
+    layers:S.layers,
+    recolorMap:S.recolorMap,
+    bgColor:S.bgColor,
+    bgColor2:S.bgColor2,
+    bgOpacity:S.bgOpacity,
+    bgType:S.bgType,
+    bgAngle:S.bgAngle,
+    exportWidth:S.exportWidth,
+    exportHeight:S.exportHeight,
+    stickerScale:S.stickerScale,
+    tgPackUrl:$('tgPackUrl') ? $('tgPackUrl').value : '',
+    tgBotToken:$('tgBotToken') ? $('tgBotToken').value : '',
+    fileName:$('fdName') ? $('fdName').textContent : 'project.json',
+    staticImageDataUrl:S.staticImageDataUrl,
+    staticFileName:S.staticFileName
+  };
+}
+
+function saveProject(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshotState())); }
+  catch(e){ console.warn('localStorage save failed', e); }
+}
+
+function loadFromJSON(json,fileName='project.json') {
+  S.staticImageDataUrl='';
+  S.staticFileName='';
+  if($('static-container')) $('static-container').innerHTML='';
+  S.lottieData=json;
+  $('fdIco').textContent='OK';
+  $('fdName').textContent=fileName;
+  $('fdMeta').textContent=`${Math.round((json.op||0)-(json.ip||0))} frames - ${json.fr||60} fps`;
+  $('emptyState').style.display='none';
+
+  S.layers=Array.isArray(json.__textLayers) ? json.__textLayers.map(l=>({...l,motionX:l.motionX||0,motionY:l.motionY||0})) : [];
+  S.recolorMap=json.__recolorMap||{};
+
+  S.extractedColors=extractColors(json);
+  renderLayersList();
+  renderAllTextNodes();
+  renderRecolorSwatches();
+  S.currentData=applyRecolorToJSON(S.lottieData,S.recolorMap);
+  initLottie(S.currentData);
+  markDirty();
+}
+
+function loadStaticItem(dataUrl,fileName='static_sticker'){
+  if(S.anim){try{S.anim.destroy()}catch(e){}S.anim=null}
+  S.lottieData=null;
+  S.currentData=null;
+  S.totalFrames=1;
+  S.fps=30;
+  S.staticImageDataUrl=dataUrl||'';
+  S.staticFileName=fileName;
+  $('lottie-container').innerHTML='';
+  const st=$('static-container');
+  if(st){
+    st.innerHTML='';
+    const img=document.createElement('img');
+    img.src=dataUrl;
+    img.alt='sticker';
+    img.style.width='100%';
+    img.style.height='100%';
+    img.style.objectFit='contain';
+    st.appendChild(img);
+  }
+  $('fdIco').textContent='OK';
+  $('fdName').textContent=fileName;
+  $('fdMeta').textContent='static sticker';
+  $('emptyState').style.display='none';
+  $('tFps').textContent='30 fps';
+  $('frameCounter').textContent='1 / 1';
+  $('pngFrameSlider').max=0;
+  $('pngFrameSlider').value=0;
+  $('pngFrameInfo').textContent='Static frame';
+  updatePngFrameLabel(0);
+  renderLayersList();
+  renderAllTextNodes();
+  applyStickerScale();
+  markDirty();
+}
+
+function restoreProject(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const s=JSON.parse(raw);
+    if(!s||(!s.lottieData && !s.staticImageDataUrl)) return;
+    S.layers=Array.isArray(s.layers)?s.layers:[];
+    S.recolorMap=s.recolorMap||{};
+    S.bgColor=s.bgColor||S.bgColor;
+    S.bgColor2=s.bgColor2||S.bgColor2;
+    S.bgOpacity=typeof s.bgOpacity==='number'?s.bgOpacity:S.bgOpacity;
+    S.bgType=s.bgType||S.bgType;
+    S.bgAngle=typeof s.bgAngle==='number'?s.bgAngle:S.bgAngle;
+    S.exportWidth=+s.exportWidth||S.exportWidth;
+    S.exportHeight=+s.exportHeight||S.exportHeight;
+    S.stickerScale=+s.stickerScale||S.stickerScale;
+    $('exportWidth').value=S.exportWidth;
+    $('exportHeight').value=S.exportHeight;
+    $('stickerScale').value=Math.round(S.stickerScale*100);
+    $('stickerScaleLabel').textContent=Math.round(S.stickerScale*100)+'%';
+    if($('tgPackUrl')) $('tgPackUrl').value=s.tgPackUrl||'';
+    if($('tgBotToken')) $('tgBotToken').value=s.tgBotToken||'';
+    syncClr($('bgColorInput'),$('bgColorSwatch'),$('bgHexEdit'),S.bgColor);
+    syncClr($('bgColor2Input'),$('bgColor2Swatch'),$('bgHex2Edit'),S.bgColor2);
+    $('bgOpacity').value=Math.round(S.bgOpacity*100);
+    $('bgOpacityLabel').textContent=Math.round(S.bgOpacity*100)+'%';
+    $('gradAngle').value=S.bgAngle;
+    $('gradAngleLabel').textContent=S.bgAngle+' deg';
+    applyBg();
+    updateStageForExport(S.exportWidth,S.exportHeight);
+    applyStickerScale();
+    if(s.staticImageDataUrl){
+      loadStaticItem(s.staticImageDataUrl, s.staticFileName || 'restored_static.webp');
+    } else {
+      loadFromJSON(s.lottieData,s.fileName||'restored_project.json');
+    }
+    showToast('success','Project restored from localStorage');
+  }catch(e){ console.warn('restore failed', e); }
+}
+
+$('fileDrop').addEventListener('dragover',e=>{e.preventDefault();$('fileDrop').classList.add('drag')});
+$('fileDrop').addEventListener('dragleave',()=>$('fileDrop').classList.remove('drag'));
+$('fileDrop').addEventListener('drop',e=>{e.preventDefault();$('fileDrop').classList.remove('drag');if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0])});
+$('fileInput').addEventListener('change',e=>{if(e.target.files[0])loadFile(e.target.files[0])});
+
+function loadFile(file) {
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try { loadFromJSON(JSON.parse(ev.target.result),file.name); }
+    catch(e) { showToast('error','Error: '+e.message+' - for .tgs use converter/import API'); }
+  };
+  reader.readAsText(file);
+}
+
+async function loadTelegramPack(){
+  const url=($('tgPackUrl').value||'').trim();
+  const token=($('tgBotToken').value||'').trim();
+  if(!url){ showToast('warn','Paste pack URL first'); return; }
+  $('tgPackMeta').textContent='Loading pack...';
+  const r=await fetch('/api/telegram/pack',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,token})});
+  const data=await r.json();
+  if(!r.ok||!data.ok){ showToast('error',data.error||'Pack loading error'); $('tgPackMeta').textContent='Pack loading error'; return; }
+  renderPackList(data, token);
+  $('tgPackMeta').textContent=`${data.title} - ${data.count} items`; 
+  markDirty();
+}
+
+function clearPackPreviewAnims(){
+  (S.packPreviewAnims||[]).forEach(a=>{try{a.destroy()}catch(e){}});
+  S.packPreviewAnims=[];
+}
+
+async function hydratePackCard(it, card, token){
+  const prev=card.querySelector('.pack-prev');
+  if(!prev) return;
+  if(it.is_video){ prev.textContent='WEBM'; return; }
+  try{
+    const r=await fetch('/api/telegram/item-preview',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({file_id:it.file_id,token:($('tgBotToken').value||token||'').trim()})
+    });
+    const data=await r.json();
+    if(!r.ok||!data.ok){ prev.textContent='Error'; return; }
+    if(data.mode==='animated' && data.json){
+      prev.innerHTML='';
+      const a=lottie.loadAnimation({container:prev,renderer:'svg',loop:true,autoplay:true,animationData:data.json});
+      S.packPreviewAnims.push(a);
+      return;
+    }
+    if(data.mode==='static' && data.dataUrl){
+      const img=document.createElement('img');
+      img.src=data.dataUrl;
+      img.alt='preview';
+      prev.innerHTML='';
+      prev.appendChild(img);
+      return;
+    }
+    prev.textContent=(data.mode||'unsupported').toUpperCase();
+  }catch(_e){ prev.textContent='Error'; }
+}
+
+function renderPackList(pack, token){
+  const list=$('tgPackList');
+  clearPackPreviewAnims();
+  list.innerHTML='';
+  pack.items.forEach((it,idx)=>{
+    const card=document.createElement('button');
+    card.type='button';
+    card.className='pack-card';
+    card.innerHTML='<div class="pack-prev">...</div><div class="pack-info"><div class="pack-top">'+(idx+1)+'. '+(it.emoji||':)')+'<span>'+it.type+'</span></div><div class="pack-sub">'+(it.width||0)+'x'+(it.height||0)+(it.is_video?' | WEBM':'')+'</div></div>';
+    if(it.is_video) card.classList.add('is-video');
+    card.addEventListener('click',()=>loadPackItem(it.file_id, token));
+    list.appendChild(card);
+    if(idx<18) setTimeout(()=>hydratePackCard(it, card, token), idx*40);
+  });
+}
+
+async function loadPackItem(fileId, token){
+  $('tgPackMeta').textContent='Loading selected item...';
+  const r=await fetch('/api/telegram/item-json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file_id:fileId,token:($('tgBotToken').value||token||'').trim()})});
+  const data=await r.json();
+  if(!r.ok||!data.ok){ showToast('error',data.error||'Item loading error'); $('tgPackMeta').textContent='Item loading error'; return; }
+  if(data.mode==='animated' && data.json){
+    loadFromJSON(data.json, data.filePath || data.file_path || 'telegram_item.tgs');
+    $('tgPackMeta').textContent='Animated item loaded';
+    return;
+  }
+  if(data.mode==='static' && data.dataUrl){
+    loadStaticItem(data.dataUrl, data.filePath || data.file_path || 'telegram_item.webp');
+    $('tgPackMeta').textContent='Static item loaded';
+    return;
+  }
+  showToast('warn','Unsupported item type');
+  $('tgPackMeta').textContent='Unsupported item';
+}
+
+if($('tgLoadPack')) $('tgLoadPack').addEventListener('click',loadTelegramPack);
+if($('tgPackUrl')) $('tgPackUrl').addEventListener('input',markDirty);
+if($('tgBotToken')) $('tgBotToken').addEventListener('input',markDirty);
+
+// ── LOTTIE (SVG RENDERER FOR PREVIEW) ───────────────────
+function initLottie(data) {
+  if(S.anim){try{S.anim.destroy()}catch(e){}S.anim=null}
+  if($('static-container')) $('static-container').innerHTML='';
+  $('lottie-container').innerHTML='';
+  S.anim=lottie.loadAnimation({
+    container:$('lottie-container'), renderer:'svg', loop:true, autoplay:false,
+    animationData:JSON.parse(JSON.stringify(data)),
+    rendererSettings:{clearCanvas:true,progressiveLoad:false,preserveAspectRatio:'xMidYMid meet'}
+  });
+  S.anim.addEventListener('data_ready',()=>{
+    S.totalFrames=S.anim.totalFrames; S.fps=S.anim.frameRate||60;
+    $('tFps').textContent=S.fps+' fps';
+    const max=Math.max(0,S.totalFrames-1);
+    $('pngFrameSlider').max=max; $('pngFrameSlider').value=0;
+    $('pngFrameInfo').textContent=`0 — ${(S.totalFrames/S.fps).toFixed(2)}s`;
+    updatePngFrameLabel(0);
+    S.anim.play(); S.playing=true; setPlayButton(true);
+  });
+}
+
+// ── RAF PLAYER LOOP (reliable, no event dependency) ──────
+function playerLoop() {
+  if (S.anim && S.totalFrames>0) {
+    const f=Math.floor(S.anim.currentFrame)||0;
+    const pct=f/S.totalFrames;
+    $('progBar').style.width=(pct*100)+'%';
+    $('progThumb').style.left=(pct*100)+'%';
+    $('frameCounter').textContent=`${f+1} / ${S.totalFrames}`;
+    $('tTime').textContent=(f/S.fps).toFixed(2)+'s';
+    $('tPct').textContent=Math.round(pct*100)+'%';
+    if (S.layers.some(l => (l.motionX || 0) !== 0 || (l.motionY || 0) !== 0)) renderAllTextNodes();
+  }
+  requestAnimationFrame(playerLoop);
+}
+requestAnimationFrame(playerLoop);
+
+// ── TRANSPORT ────────────────────────────────────────────
+$('tPlay').addEventListener('click',()=>{ if(!S.anim)return; if(S.playing){S.anim.pause();S.playing=false;setPlayButton(false)}else{S.anim.play();S.playing=true;setPlayButton(true)} });
+$('tFirst').addEventListener('click',()=>{if(S.anim)S.anim.goToAndStop(0,true)});
+$('tLast').addEventListener('click',()=>{if(S.anim)S.anim.goToAndStop(S.totalFrames-1,true)});
+$('progWrap').addEventListener('click',e=>{
+  if(!S.anim)return;
+  const rect=$('progWrap').getBoundingClientRect();
+  S.anim.goToAndStop(Math.floor(Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width))*S.totalFrames),true);
+});
+
+// ── TABS ─────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active'); const p=$('tab-'+t.dataset.tab); if(p)p.classList.add('active');
+}));
+
+// ── TEXT LAYERS ──────────────────────────────────────────
+let layerIdCounter=0;
+const getActive=()=>S.layers.find(l=>l.id===S.activeId)||null;
+
+function addLayer() {
+  const id=++layerIdCounter;
+  S.layers.push({id,text:'текст',x:50,y:25,color:'#ffffff',size:32,font:'Montserrat',bold:true,shadow:false,strokeColor:'#000000',strokeWidth:0,align:'center',behindObject:false,motionX:0,motionY:0});
+  setActiveLayer(id); renderLayersList(); renderAllTextNodes();
+  $('layerEditor').style.display=''; populateEditor(getActive());
+}
+
+function setActiveLayer(id) {
+  S.activeId=id;
+  [$('text-back'),$('text-front')].forEach(el=>el.classList.add('editing'));
+  document.querySelectorAll('.text-node').forEach(n=>n.classList.toggle('selected',+n.dataset.id===id));
+  document.querySelectorAll('.layer-item').forEach(n=>n.classList.toggle('active',+n.dataset.id===id));
+  const l=getActive();
+  if(l){$('layerEditor').style.display='';populateEditor(l)}else $('layerEditor').style.display='none';
+}
+
+function removeLayer(id) {
+  S.layers=S.layers.filter(l=>l.id!==id);
+  if(S.activeId===id)S.activeId=S.layers.length?S.layers[S.layers.length-1].id:null;
+  renderLayersList(); renderAllTextNodes();
+  if(!S.activeId){$('layerEditor').style.display='none';[$('text-back'),$('text-front')].forEach(el=>el.classList.remove('editing'))}
+  else setActiveLayer(S.activeId);
+}
+
+function renderLayersList() {
+  $('layersList').innerHTML=''; $('layerCount').textContent=S.layers.length;
+  S.layers.forEach(l=>{
+    const el=document.createElement('div');
+    el.className='layer-item fade-up'+(l.id===S.activeId?' active':''); el.dataset.id=l.id;
+    const ico=l.behindObject?'BK':'T';
+    el.innerHTML=`<span class=\"li-ico\">${ico}</span><div class=\"li-info\"><div class=\"li-name\">${esc(l.text||'(empty)')}</div><div class=\"li-meta\">${l.font.replace(/'/g,'')} | ${l.size}px | ${l.motionX||0}/${l.motionY||0}%</div></div><button class=\"li-del\" data-del=\"${l.id}\">x</button>`;
+    el.addEventListener('click',ev=>{if(ev.target.dataset.del)return;setActiveLayer(l.id);renderLayersList()});
+    el.querySelector('[data-del]').addEventListener('click',ev=>{ev.stopPropagation();removeLayer(l.id)});
+    $('layersList').appendChild(el);
+  });
+}
+
+function populateEditor(layer) {
+  $('textInput').value=layer.text; $('textCounter').textContent=layer.text.length+'/60';
+  syncClr($('colorInput'),$('colorSwatch'),$('colorHexEdit'),layer.color);
+  $('sizeInput').value=layer.size; $('fontSelect').value=layer.font;
+  syncClr($('strokeColorInput'),$('strokeSwatch'),$('strokeHexEdit'),layer.strokeColor);
+  $('strokeWidth').value=layer.strokeWidth;
+  document.querySelectorAll('.align-btn[data-align]').forEach(b=>b.classList.toggle('active',b.dataset.align===(layer.align||'center')));
+  $('boldBtn').classList.toggle('active',!!layer.bold);
+  $('shadowBtn').classList.toggle('active',!!layer.shadow);
+  $('behindBtn').classList.toggle('active',!!layer.behindObject);
+  $('motionX').value=layer.motionX||0;
+  $('motionY').value=layer.motionY||0;
+  $('motionXLabel').textContent=(layer.motionX||0)+'%';
+  $('motionYLabel').textContent=(layer.motionY||0)+'%';
+}
+
+// ── TEXT NODE RENDERING ──────────────────────────────────
+function renderAllTextNodes() {
+  $('text-back').innerHTML=''; $('text-front').innerHTML='';
+  S.layers.forEach(l=>renderTextNode(l));
+}
+
+function renderTextNode(layer) {
+  const container=layer.behindObject?$('text-back'):$('text-front');
+  const ex=container.querySelector(`[data-id="${layer.id}"]`); if(ex)ex.remove();
+  const el=document.createElement('div');
+  el.className='text-node'+(layer.id===S.activeId?' selected':''); el.dataset.id=layer.id;
+  const sc=S.stageSize/512;
+  const sh=layer.shadow?`2px 3px ${Math.round(5*sc)}px rgba(0,0,0,.9),0 1px ${Math.round(2*sc)}px rgba(0,0,0,.6)`:'none';
+  const pos=getLayerRenderPos(layer);
+  el.style.cssText=`left:${pos.x}%;top:${pos.y}%;color:${layer.color};font-size:${layer.size*sc}px;font-family:${layer.font},sans-serif;font-weight:${layer.bold?'800':'400'};text-align:${layer.align||'center'};-webkit-text-stroke:${layer.strokeWidth}px ${layer.strokeColor};text-shadow:${sh};line-height:1.1;`;
+  el.textContent=layer.text||'';
+  const h=document.createElement('div'); h.className='resize-h'; el.appendChild(h);
+  el.addEventListener('mousedown',e=>{
+    if(e.target===h)return; e.preventDefault();
+    setActiveLayer(layer.id); renderLayersList();
+    const rect=$('stage').getBoundingClientRect();
+    S.dragging={id:layer.id,startX:e.clientX,startY:e.clientY,origX:layer.x,origY:layer.y,stageW:rect.width,stageH:rect.height};
+  });
+  h.addEventListener('mousedown',e=>{
+    e.preventDefault(); e.stopPropagation(); const sy=e.clientY,os=layer.size;
+    const mv=ev=>{layer.size=Math.max(6,Math.min(200,Math.round(os+(ev.clientY-sy)*.5)));renderTextNode(layer);$('sizeInput').value=layer.size};
+    const up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up)};
+    document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
+  });
+  el.addEventListener('click',()=>{setActiveLayer(layer.id);renderLayersList()});
+  container.appendChild(el);
+}
+
+document.addEventListener('mousemove',e=>{
+  if(!S.dragging)return;
+  const d=S.dragging, layer=S.layers.find(l=>l.id===d.id); if(!layer)return;
+  layer.x=Math.max(0,Math.min(100,d.origX+((e.clientX-d.startX)/d.stageW)*100));
+  layer.y=Math.max(0,Math.min(100,d.origY+((e.clientY-d.startY)/d.stageH)*100));
+  renderTextNode(layer);
+});
+document.addEventListener('mouseup',()=>{S.dragging=null});
+
+// ── ATTACH TO OBJECT ─────────────────────────────────────
+// ── TEXT MOTION ─────────────────────────────────────
+$('motionX').addEventListener('input',()=>{
+  const l=getActive(); if(!l) return;
+  l.motionX=parseInt($('motionX').value,10)||0;
+  $('motionXLabel').textContent=l.motionX+'%';
+  renderLayersList(); renderTextNode(l);
+});
+$('motionY').addEventListener('input',()=>{
+  const l=getActive(); if(!l) return;
+  l.motionY=parseInt($('motionY').value,10)||0;
+  $('motionYLabel').textContent=l.motionY+'%';
+  renderLayersList(); renderTextNode(l);
+});
+
+// ── EDITOR INPUTS ────────────────────────────────────────
+const syncClr=(ni,sw,he,hex)=>{const h=(hex||'#000000').slice(0,7);ni.value=h;sw.style.background=h;he.value=h.toUpperCase()};
+
+$('textInput').addEventListener('input',()=>$('textCounter').textContent=$('textInput').value.length+'/60');
+$('colorInput').addEventListener('input',()=>syncClr($('colorInput'),$('colorSwatch'),$('colorHexEdit'),$('colorInput').value));
+$('colorWrap').addEventListener('click',()=>$('colorInput').click());
+$('colorHexEdit').addEventListener('input',()=>{const v=$('colorHexEdit').value;if(/^#[0-9a-fA-F]{6}$/.test(v)){$('colorInput').value=v;$('colorSwatch').style.background=v}});
+$('strokeColorInput').addEventListener('input',()=>syncClr($('strokeColorInput'),$('strokeSwatch'),$('strokeHexEdit'),$('strokeColorInput').value));
+$('strokeColorWrap').addEventListener('click',()=>$('strokeColorInput').click());
+$('strokeHexEdit').addEventListener('input',()=>{const v=$('strokeHexEdit').value;if(/^#[0-9a-fA-F]{6}$/.test(v)){$('strokeColorInput').value=v;$('strokeSwatch').style.background=v}});
+document.querySelectorAll('.align-btn[data-align]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.align-btn[data-align]').forEach(b=>b.classList.remove('active'));btn.classList.add('active')}));
+document.querySelectorAll('.align-btn[data-weight]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.align-btn[data-weight]').forEach(b=>b.classList.remove('active'));btn.classList.add('active')}));
+$('shadowBtn').addEventListener('click',()=>$('shadowBtn').classList.toggle('active'));
+$('behindBtn').addEventListener('click',()=>{
+  $('behindBtn').classList.toggle('active');
+  const layer=getActive();if(!layer)return;
+  layer.behindObject=$('behindBtn').classList.contains('active');
+  renderLayersList(); renderAllTextNodes();
+});
+$('addLayerBtn').addEventListener('click',addLayer);
+$('fontSelect').addEventListener('change',()=>{const l=getActive();if(l){l.font=$('fontSelect').value;renderTextNode(l)}});
+$('stickerScale').addEventListener('input',()=>{
+  S.stickerScale=(+$('stickerScale').value||100)/100;
+  $('stickerScaleLabel').textContent=Math.round(S.stickerScale*100)+'%';
+  applyStickerScale();
+  markDirty();
+});
+
+$('applyBtn').addEventListener('click',()=>{
+  let layer=getActive();if(!layer){addLayer();layer=getActive()}
+  layer.text=$('textInput').value; layer.color=$('colorInput').value;
+  layer.size=parseInt($('sizeInput').value)||32; layer.font=$('fontSelect').value;
+  layer.strokeColor=$('strokeColorInput').value; layer.strokeWidth=parseInt($('strokeWidth').value)||0;
+  layer.bold=$('boldBtn').classList.contains('active'); layer.shadow=$('shadowBtn').classList.contains('active');
+  layer.behindObject=$('behindBtn').classList.contains('active');
+  const aa=document.querySelector('.align-btn[data-align].active');layer.align=aa?aa.dataset.align:'center';
+  renderLayersList(); renderAllTextNodes(); showStatus();
+});
+
+// ── AUTO RECOLOR ─────────────────────────────────────────
+function setupClr(wid,iid,sid,hid,def){
+  syncClr($(iid),$(sid),$(hid),def);
+  $(iid).addEventListener('input',()=>syncClr($(iid),$(sid),$(hid),$(iid).value));
+  $(wid).addEventListener('click',()=>$(iid).click());
+  $(hid).addEventListener('input',()=>{const v=$(hid).value;if(/^#[0-9a-fA-F]{6}$/.test(v)){$(iid).value=v;$(sid).style.background=v}});
+}
+setupClr('autoSrcWrap','autoSrcInput','autoSrcSwatch','autoSrcHex','#7c3aed');
+setupClr('autoTgtWrap','autoTgtInput','autoTgtSwatch','autoTgtHex','#059669');
+$('autoTolerance').addEventListener('input',()=>$('autoTolLabel').textContent=$('autoTolerance').value+'°');
+$('applyAutoRecolor').addEventListener('click',()=>{
+  if(!S.lottieData){ showToast('error','Загрузите файл'); return }
+  const srcHex=$('autoSrcInput').value.toUpperCase();
+  const tgtHex=$('autoTgtInput').value.toUpperCase();
+  const tol=+$('autoTolerance').value;
+  const srcHsl=hexToHsl(srcHex);
+  let cnt=0;
+  S.extractedColors.forEach(hex=>{if(hueDist(srcHsl.h,hexToHsl(hex).h)<=tol){S.recolorMap[hex.toUpperCase()]={target:tgtHex,mode:'smart',hueShift:0,satMult:1,valMult:1};cnt++}});
+  if(!cnt){ showToast('warn','Не найдено похожих цветов. Попробуйте увеличить допуск.'); return }
+  rebuildAndReload();
+});
+
+// ── MANUAL RECOLOR ───────────────────────────────────────
+function renderRecolorSwatches() {
+  const cont=$('recolorSwatches'); cont.innerHTML='';
+  $('colorCountBadge').textContent=`(${S.extractedColors.length})`;
+  S.extractedColors.forEach((hex,i)=>{
+    const sw=document.createElement('div');
+    const mapped=!!S.recolorMap[hex.toUpperCase()];
+    sw.className='rc-sw'+(i===S.selectedColorIdx?' sel':'')+(mapped?' remapped':'');
+    sw.style.background=hex; sw.title=hex.toUpperCase()+(mapped?' → '+S.recolorMap[hex.toUpperCase()].target:'');
+    sw.addEventListener('click',()=>selectRecolorColor(i));
+    cont.appendChild(sw);
+  });
+}
+function selectRecolorColor(idx) {
+  S.selectedColorIdx=idx; renderRecolorSwatches();
+  const hex=S.extractedColors[idx]; $('origColorSwatch').style.background=hex;
+  const ex=S.recolorMap[hex.toUpperCase()];
+  syncClr($('newColorInput'),$('newColorSwatch'),$('newColorHexEdit'),ex?ex.target:hex);
+  $('recolorTarget').style.display=''; updateHueThumb(hexToHsl(hex).h);
+}
+$('newColorInput').addEventListener('input',()=>syncClr($('newColorInput'),$('newColorSwatch'),$('newColorHexEdit'),$('newColorInput').value));
+$('newColorWrap').addEventListener('click',()=>$('newColorInput').click());
+$('newColorHexEdit').addEventListener('input',()=>{const v=$('newColorHexEdit').value;if(/^#[0-9a-fA-F]{6}$/.test(v)){$('newColorInput').value=v;$('newColorSwatch').style.background=v}});
+document.querySelectorAll('.mode-btn[data-mode]').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.mode-btn[data-mode]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  S.recolorMode=btn.dataset.mode; $('hueModeUI').style.display=S.recolorMode==='hue'?'':'none';
+}));
+
+let hueDragging=false;
+function updateHueThumb(deg){$('hueThumb').style.left=(deg/360*100)+'%';$('hueThumb').style.background=`hsl(${deg},100%,50%)`;$('hueValLabel').textContent=Math.round(deg)+'°'}
+$('hueBar').addEventListener('mousedown',e=>{hueDragging=true;moveHue(e)});
+document.addEventListener('mousemove',e=>{if(hueDragging)moveHue(e)});
+document.addEventListener('mouseup',()=>{hueDragging=false});
+function moveHue(e){
+  const rect=$('hueBar').getBoundingClientRect();
+  const deg=Math.round(Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width))*360);
+  updateHueThumb(deg);
+  if(S.selectedColorIdx!=null){
+    const h=hexToHsl(S.extractedColors[S.selectedColorIdx]);
+    syncClr($('newColorInput'),$('newColorSwatch'),$('newColorHexEdit'),hslToHex((h.h+deg)%360,h.s,h.l));
+  }
+}
+$('applyRecolorBtn').addEventListener('click',()=>{
+  if(S.selectedColorIdx===null)return;
+  S.recolorMap[S.extractedColors[S.selectedColorIdx].toUpperCase()]={target:$('newColorInput').value.toUpperCase(),mode:S.recolorMode,hueShift:parseInt($('hueValLabel').textContent)||0,satMult:+$('satSlider').value/100,valMult:+$('valSlider').value/100};
+  rebuildAndReload();
+});
+$('resetOneBtn').addEventListener('click',()=>{if(S.selectedColorIdx===null)return;delete S.recolorMap[S.extractedColors[S.selectedColorIdx].toUpperCase()];rebuildAndReload()});
+$('resetAllBtn').addEventListener('click',()=>{S.recolorMap={};rebuildAndReload()});
+$('reExtractBtn').addEventListener('click',()=>{if(!S.lottieData)return;S.extractedColors=extractColors(S.lottieData);renderRecolorSwatches()});
+
+function rebuildAndReload() {
+  if(!S.lottieData)return;
+  S.currentData=applyRecolorToJSON(S.lottieData,S.recolorMap);
+  const was=S.playing, cf=S.anim?Math.floor(S.anim.currentFrame):0;
+  initLottie(S.currentData);
+  if(!was)setTimeout(()=>{if(S.anim){S.anim.goToAndStop(cf,true);S.playing=false;setPlayButton(false)}},350);
+  renderRecolorSwatches(); showStatus();
+}
+
+// ── BACKGROUND ───────────────────────────────────────────
+(()=>{
+  const presets=['#111118','#000000','#ffffff','#1a1a2e','#0f3460','#7c3aed','#065f46','#7f1d1d','#374151','transparent'];
+  const cont=$('bgPresets');
+  presets.forEach((p,i)=>{
+    const el=document.createElement('div');
+    el.className='bg-preset'+(i===0?' active':'');
+    if(p==='transparent')el.classList.add('checker'); else el.style.background=p;
+    el.title=p;
+    el.addEventListener('click',()=>{
+      document.querySelectorAll('.bg-preset').forEach(b=>b.classList.remove('active'));el.classList.add('active');
+      if(p==='transparent'){S.bgType='transparent';document.querySelectorAll('.mode-btn[data-bgtype]').forEach(b=>b.classList.toggle('active',b.dataset.bgtype==='transparent'))}
+      else{S.bgColor=p;S.bgType='solid';syncClr($('bgColorInput'),$('bgColorSwatch'),$('bgHexEdit'),p);document.querySelectorAll('.mode-btn[data-bgtype]').forEach(b=>b.classList.toggle('active',b.dataset.bgtype==='solid'))}
+      applyBg();
+    });
+    cont.appendChild(el);
+  });
+})();
+$('bgColorInput').addEventListener('input',()=>{syncClr($('bgColorInput'),$('bgColorSwatch'),$('bgHexEdit'),$('bgColorInput').value);S.bgColor=$('bgColorInput').value});
+$('bgColorWrap').addEventListener('click',()=>$('bgColorInput').click());
+$('bgHexEdit').addEventListener('input',()=>{const v=$('bgHexEdit').value;if(/^#[0-9a-fA-F]{6}$/.test(v)){$('bgColorInput').value=v;$('bgColorSwatch').style.background=v;S.bgColor=v}});
+$('bgColor2Input').addEventListener('input',()=>{syncClr($('bgColor2Input'),$('bgColor2Swatch'),$('bgHex2Edit'),$('bgColor2Input').value);S.bgColor2=$('bgColor2Input').value});
+$('bgColor2Wrap').addEventListener('click',()=>$('bgColor2Input').click());
+$('bgHex2Edit').addEventListener('input',()=>{const v=$('bgHex2Edit').value;if(/^#[0-9a-fA-F]{6}$/.test(v)){$('bgColor2Input').value=v;$('bgColor2Swatch').style.background=v;S.bgColor2=v}});
+$('bgOpacity').addEventListener('input',()=>{S.bgOpacity=$('bgOpacity').value/100;$('bgOpacityLabel').textContent=$('bgOpacity').value+'%';applyBg()});
+$('gradAngle').addEventListener('input',()=>{S.bgAngle=+$('gradAngle').value;$('gradAngleLabel').textContent=$('gradAngle').value+'°';applyBg()});
+document.querySelectorAll('.mode-btn[data-bgtype]').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.mode-btn[data-bgtype]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  S.bgType=btn.dataset.bgtype; $('gradientUI').style.display=S.bgType==='gradient'?'':'none'; applyBg();
+}));
+$('applyBgBtn').addEventListener('click',()=>{applyBg();showStatus()});
+function applyBg() {
+  const bl=$('bg-layer'),op=S.bgOpacity;
+  if(S.bgType==='transparent'){bl.style.background='repeating-conic-gradient(#444 0% 25%,#1a1a1a 0% 50%) 0 0/14px 14px';bl.style.opacity='1'}
+  else if(S.bgType==='gradient'){bl.style.background=`linear-gradient(${S.bgAngle}deg,${S.bgColor},${S.bgColor2})`;bl.style.opacity=op}
+  else{bl.style.background=S.bgColor;bl.style.opacity=op}
+}
+
+// ── SIZE CHIPS ───────────────────────────────────────────
+document.querySelectorAll('.size-chip').forEach(chip=>chip.addEventListener('click',()=>{
+  document.querySelectorAll('.size-chip').forEach(c=>c.classList.remove('active'));chip.classList.add('active');
+  S.exportWidth=+chip.dataset.w; S.exportHeight=+chip.dataset.h;
+  $('exportWidth').value=chip.dataset.w; $('exportHeight').value=chip.dataset.h;
+  updateStageForExport(S.exportWidth,S.exportHeight);
+}));
+$('exportWidth').addEventListener('input',()=>{S.exportWidth=+$('exportWidth').value||512;document.querySelectorAll('.size-chip').forEach(c=>c.classList.remove('active'));updateStageForExport(S.exportWidth,S.exportHeight)});
+$('exportHeight').addEventListener('input',()=>{S.exportHeight=+$('exportHeight').value||512;document.querySelectorAll('.size-chip').forEach(c=>c.classList.remove('active'));updateStageForExport(S.exportWidth,S.exportHeight)});
+
+// ── PNG FRAME PICKER ─────────────────────────────────────
+function updatePngFrameLabel(f) {
+  $('pngFrameTime').textContent=(f/Math.max(1,S.fps)).toFixed(2)+'s';
+  $('pngFrameInfo').textContent=`Кадр ${f+1} из ${S.totalFrames}`;
+  S.pngFrame=f;
+}
+$('pngFrameSlider').addEventListener('input',()=>{
+  const f=+$('pngFrameSlider').value; updatePngFrameLabel(f);
+  if(S.anim)S.anim.goToAndStop(f,true);
+});
+
+// ── CANVAS EXPORT ENGINE ─────────────────────────────────
+// Uses canvas renderer in a hidden div for reliable multi-frame capture
+let expDiv=null, expAnim=null, expCanvas=null, expStaticImg=null;
+
+async function setupExportEngine(w,h) {
+  if(expAnim){try{expAnim.destroy()}catch(e){}expAnim=null}
+  if(expDiv){try{expDiv.remove()}catch(e){}expDiv=null}
+  expCanvas=null;
+  expStaticImg=null;
+
+  if(S.staticImageDataUrl){
+    expStaticImg = new Image();
+    await new Promise((resolve)=>{
+      expStaticImg.onload=()=>resolve(true);
+      expStaticImg.onerror=()=>resolve(false);
+      expStaticImg.src=S.staticImageDataUrl;
+    });
+    return true;
+  }
+
+  expDiv=document.createElement('div');
+  expDiv.style.cssText=`position:fixed;left:${-(w*2+300)}px;top:0;width:${w}px;height:${h}px;overflow:hidden;pointer-events:none;`;
+  document.body.appendChild(expDiv);
+  const data=S.currentData||S.lottieData; if(!data) return false;
+  return new Promise(res=>{
+    expAnim=lottie.loadAnimation({
+      container:expDiv, renderer:'canvas', loop:false, autoplay:false,
+      animationData:JSON.parse(JSON.stringify(data)),
+      rendererSettings:{clearCanvas:true,progressiveLoad:false,preserveAspectRatio:'xMidYMid meet'}
+    });
+    expAnim.addEventListener('data_ready',()=>{
+      expCanvas=expDiv.querySelector('canvas');
+      if(expAnim.setSubframe) expAnim.setSubframe(false);
+      try{ expAnim.goToAndStop(0,true); }catch(e){}
+      setTimeout(()=>res(true),260);
+    });
+    setTimeout(()=>res(true),5000);
+  });
+}
+function drawBgToCtx(ctx,w,h) {
+  if(S.bgType==='transparent')return;
+  ctx.save(); ctx.globalAlpha=S.bgOpacity;
+  if(S.bgType==='gradient'){
+    const rad=S.bgAngle*Math.PI/180;
+    const grd=ctx.createLinearGradient(0,0,w*Math.cos(rad),h*Math.sin(rad));
+    grd.addColorStop(0,S.bgColor); grd.addColorStop(1,S.bgColor2); ctx.fillStyle=grd;
+  } else { ctx.fillStyle=S.bgColor }
+  ctx.fillRect(0,0,w,h); ctx.restore();
+}
+
+function drawLayerToCtx(ctx,layer,w,h) {
+  const pos=getLayerRenderPos(layer,window.__renderFrameIdx);
+  const x=(pos.x/100)*w, y=(pos.y/100)*h, fs=layer.size*(w/512);
+  ctx.save();
+  ctx.font=`${layer.bold?'800':'400'} ${fs}px ${layer.font}`;
+  ctx.textAlign=layer.align||'center'; ctx.textBaseline='middle';
+  if(layer.shadow){ctx.shadowColor='rgba(0,0,0,.9)';ctx.shadowBlur=fs*.15;ctx.shadowOffsetX=2;ctx.shadowOffsetY=3}
+  if(layer.strokeWidth>0){ctx.strokeStyle=layer.strokeColor;ctx.lineWidth=layer.strokeWidth*(w/512);ctx.lineJoin='round';ctx.strokeText(layer.text||'',x,y)}
+  ctx.fillStyle=layer.color; ctx.fillText(layer.text||'',x,y); ctx.restore();
+}
+
+async function captureFrame(frameIdx,w,h) {
+  const out=document.createElement('canvas'); out.width=w; out.height=h;
+  const ctx=out.getContext('2d');
+  drawBgToCtx(ctx,w,h);
+  window.__renderFrameIdx = frameIdx;
+  // Behind-object text layers
+  S.layers.filter(l=>l.behindObject).forEach(l=>drawLayerToCtx(ctx,l,w,h));
+  // Draw sticker from export canvas/static image
+  if(expStaticImg){
+    try{
+      const sw=w*S.stickerScale;
+      const sh=h*S.stickerScale;
+      const dx=(w-sw)/2;
+      const dy=(h-sh)/2;
+      ctx.drawImage(expStaticImg,dx,dy,sw,sh);
+    }catch(e){ console.warn('Static export draw error:',e) }
+  }
+  else if(expAnim){
+    const maxFrame=Math.max(0,Math.round((expAnim.totalFrames||S.totalFrames||1)-1));
+    const targetFrame=Math.max(0,Math.min(maxFrame,Math.round(frameIdx)));
+    expCanvas=expDiv ? (expDiv.querySelector('canvas') || expCanvas) : expCanvas;
+    expAnim.goToAndStop(targetFrame,true);
+    if(expAnim.renderer && typeof expAnim.renderer.renderFrame==='function'){
+      try{ expAnim.renderer.renderFrame(targetFrame + (expAnim.firstFrame || 0)); }catch(e){}
+    }
+    await waitForRenderTick();
+    await sleep(12);
+    if(expCanvas && expCanvas.width>0 && expCanvas.height>0){
+      try{
+        const sw=w*S.stickerScale;
+        const sh=h*S.stickerScale;
+        const dx=(w-sw)/2;
+        const dy=(h-sh)/2;
+        ctx.drawImage(expCanvas,dx,dy,sw,sh);
+      }catch(e){ console.warn('Canvas export draw error:',e) }
+    }
+  }
+  // Front text layers
+  S.layers.filter(l=>!l.behindObject).forEach(l=>drawLayerToCtx(ctx,l,w,h));
+  window.__renderFrameIdx = null;
+  return out;
+}
+
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const waitForRenderTick=()=>new Promise(resolve=>{
+  requestAnimationFrame(()=>requestAnimationFrame(resolve));
+});
+
+const getFrameTotal=()=>{
+  if(S.staticImageDataUrl) return 1;
+  const data=(S.currentData||S.lottieData||{});
+  const metaFrames=Math.round((data.op||0)-(data.ip||0));
+  const animFrames=Math.round(S.totalFrames||0);
+  return Math.max(1, animFrames, metaFrames || 0);
+};
+
+// ── EXPORT OVERLAY ───────────────────────────────────────
+const showExp=(title,sub)=>{$('emTitle').textContent=title;$('emSub').textContent=sub;$('emPb').style.width='0%';$('emPct').textContent='0%';$('exportOverlay').classList.add('show');S.cancelled=false};
+const updExp=(pct,sub)=>{const p=Math.min(100,Math.round(pct));$('emPb').style.width=p+'%';$('emPct').textContent=p+'%';if(sub)$('emSub').textContent=sub};
+const hideExp=()=>{$('exportOverlay').classList.remove('show');if(expDiv){try{expDiv.remove()}catch(e){}expDiv=null}if(expAnim){try{expAnim.destroy()}catch(e){}expAnim=null}};
+$('emCancel').addEventListener('click',()=>{S.cancelled=true;hideExp()});
+
+// ── EXPORT PNG ───────────────────────────────────────────
+$('exportPng').addEventListener('click',async()=>{
+  if(!S.lottieData && !S.staticImageDataUrl){ showToast('error','Загрузите файл');return}
+  const w=S.exportWidth,h=S.exportHeight,f=S.pngFrame;
+  showExp('Экспорт PNG',`${w}×${h} · кадр ${f+1}`);
+  await setupExportEngine(w,h);
+  if(S.cancelled)return;
+  updExp(50,'Рендер кадра...');
+  const canvas=await captureFrame(f,w,h);
+  updExp(100,'Сохранение...');
+  canvas.toBlob(blob=>{if(blob)dlBlob(blob,`emoji_f${f+1}_${w}x${h}.png`,'image/png');hideExp();showStatus()},'image/png');
+});
+
+// ── GIF EXPORT (gif.js) ─────────────────────────────────
+$('exportGif').addEventListener('click',async()=>{
+  if(!S.lottieData && !S.staticImageDataUrl){ showToast('error','Загрузите файл');return}
+  if(typeof GIF==='undefined'){ showToast('error','GIF engine not loaded'); return }
+  const w=S.exportWidth,h=S.exportHeight;
+  const total=getFrameTotal();
+  const frameDelay=Math.max(16,Math.round(1000/Math.max(1,S.fps)));
+
+  showExp('Экспорт GIF', w + '×' + h + ' · Инициализация...');
+  await setupExportEngine(w,h);
+  if(S.cancelled)return;
+
+  const gif=new GIF({workers:2,quality:10,width:w,height:h,workerScript:'./vendor/gif.worker.js'});
+
+  for(let f=0;f<total;f++){
+    if(S.cancelled){ try{gif.abort()}catch(e){} hideExp(); return; }
+    const canvas=await captureFrame(f,w,h);
+    gif.addFrame(canvas,{copy:true,delay:frameDelay});
+    updExp((f/total)*85,'Кадр ' + (f+1) + ' / ' + total);
+    await sleep(0);
+  }
+
+  updExp(90,'Кодирование...');
+  const blob=await new Promise((resolve,reject)=>{
+    gif.on('finished',resolve);
+    gif.on('abort',()=>reject(new Error('aborted')));
+    try{ gif.render(); }catch(err){ reject(err); }
+  }).catch(err=>{ if(!S.cancelled) showToast('error','Ошибка GIF: '+err.message); return null; });
+
+  if(blob) dlBlob(blob,'emoji_' + w + 'x' + h + '.gif','image/gif');
+  hideExp(); showStatus();
+});
+// ── EXPORT JSON / TGS ────────────────────────────────────
+$('exportJson').addEventListener('click',()=>{
+  if(!S.lottieData){ showToast('error','Load animated file first');return}
+  const d=JSON.parse(JSON.stringify(S.currentData||S.lottieData));
+  d.__textLayers=S.layers.map(l=>({...l})); d.__recolorMap=S.recolorMap;
+  dlBlob(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}),'emoji_edited.json','application/json'); showStatus();
+});
+$('exportTgs').addEventListener('click',()=>{
+  if(!S.lottieData){ showToast('error','Load animated file first');return}
+  const d=JSON.parse(JSON.stringify(S.currentData||S.lottieData));
+  d.__textLayers=S.layers.map(l=>({...l})); d.__recolorMap=S.recolorMap;
+  dlBlob(new Blob([JSON.stringify(d)],{type:'application/json'}),'emoji_edited.tgs','application/json'); showStatus();
+});
+
+// ── HELPERS ──────────────────────────────────────────────
+function dlBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href)}
+// Toast notifications (replace browser alert)
+function showToast(type,txt,ttl=3500){
+  try{
+    const cont=$('toastContainer'); if(!cont) return;
+    const t=document.createElement('div'); t.className='toast '+(type||'info'); t.textContent=txt;
+    cont.appendChild(t);
+    setTimeout(()=>t.classList.add('show'),20);
+    setTimeout(()=>{t.classList.remove('show'); setTimeout(()=>t.remove(),300)},ttl);
+  }catch(e){console.warn('toast',e)}
+}
+
+function showStatus(){
+  $('statusBar').classList.add('show');clearTimeout(showStatus._t);showStatus._t=setTimeout(()=>$('statusBar').classList.remove('show'),2800);
+  markDirty();
+}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// ── INIT ─────────────────────────────────────────────────
+updateStageSize();
+syncClr($('colorInput'),$('colorSwatch'),$('colorHexEdit'),'#ffffff');
+syncClr($('strokeColorInput'),$('strokeSwatch'),$('strokeHexEdit'),'#000000');
+syncClr($('bgColorInput'),$('bgColorSwatch'),$('bgHexEdit'),S.bgColor);
+syncClr($('bgColor2Input'),$('bgColor2Swatch'),$('bgHex2Edit'),S.bgColor2);
+applyBg(); updateHueThumb(0); applyStickerScale();
+restoreProject();
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+

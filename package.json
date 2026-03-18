@@ -1,0 +1,21 @@
+{
+  "name": "dreinn.converter",
+  "version": "1.2.0",
+  "private": true,
+  "description": "dreinn.converter - local Telegram emoji/sticker lottie editor",
+  "main": "server.js",
+  "scripts": {
+    "copy:vendor": "node scripts/copy-lottie.js",
+    "postinstall": "npm run copy:vendor",
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "gif.js": "^0.2.0",
+    "lottie-web": "^5.12.2"
+  }
+}
