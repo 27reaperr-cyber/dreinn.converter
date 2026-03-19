@@ -392,10 +392,42 @@
 
 const $ = id => document.getElementById(id);
 
-const setPlayButton = (isPlaying) => {
-  $('tPlay').textContent = isPlaying ? 'Pause' : 'Play';
+const iconSvg = {
+  play:'<svg class="ui-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 5v14l11-7z"/></svg>',
+  pause:'<svg class="ui-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 5h3v14H8zM13 5h3v14h-3z"/></svg>',
+  first:'<svg class="ui-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 5v14M18 6l-8 6 8 6z"/></svg>',
+  last:'<svg class="ui-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 5v14M6 6l8 6-8 6z"/></svg>',
+  file:'<svg class="ui-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>',
+  alignLeft:'<svg class="ui-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 10h10M4 14h16M4 18h10"/></svg>',
+  alignCenter:'<svg class="ui-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 10h10M4 14h16M7 18h10"/></svg>',
+  alignRight:'<svg class="ui-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M10 10h10M4 14h16M10 18h10"/></svg>',
+  bold:'<svg class="ui-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 5h7a4 4 0 0 1 0 8H7zM7 13h8a4 4 0 0 1 0 8H7z"/></svg>',
+  text:'<svg class="ui-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M12 7v12"/></svg>',
+  shadow:'<svg class="ui-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="5"/><path d="M15 15l4 4"/></svg>',
+  layer:'<svg class="ui-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="m2 12 10 5 10-5"/></svg>',
+  spark:'<svg class="ui-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8z"/></svg>'
 };
 
+const setPlayButton = (isPlaying) => {
+  $('tPlay').innerHTML = (isPlaying ? iconSvg.pause : iconSvg.play) + '<span>' + (isPlaying ? 'Pause' : 'Play') + '</span>';
+};
+
+function applySvgIcons(){
+  const fd=$('fdIco'); if(fd) fd.innerHTML=iconSvg.file;
+  const first=$('tFirst'); if(first) first.innerHTML=iconSvg.first;
+  const last=$('tLast'); if(last) last.innerHTML=iconSvg.last;
+  const empty=document.querySelector('.empty-ico'); if(empty) empty.innerHTML=iconSvg.spark;
+
+  const left=document.querySelector('.align-btn[data-align="left"]'); if(left) left.innerHTML=iconSvg.alignLeft;
+  const center=document.querySelector('.align-btn[data-align="center"]'); if(center) center.innerHTML=iconSvg.alignCenter;
+  const right=document.querySelector('.align-btn[data-align="right"]'); if(right) right.innerHTML=iconSvg.alignRight;
+  const bold=$('boldBtn'); if(bold) bold.innerHTML=iconSvg.bold;
+  const normal=document.querySelector('.align-btn[data-weight="normal"]'); if(normal) normal.innerHTML=iconSvg.text;
+  const shadow=$('shadowBtn'); if(shadow) shadow.innerHTML=iconSvg.shadow;
+  const behind=$('behindBtn'); if(behind) behind.innerHTML=iconSvg.layer;
+  const resetOne=$('resetOneBtn'); if(resetOne) resetOne.innerHTML=iconSvg.spark;
+  setPlayButton(false);
+}
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const getAnimProgress = (frameIdx) => {
   if (!S.totalFrames) return 0;
@@ -435,7 +467,14 @@ const S = {
   stickerScale: 1,
   staticImageDataUrl: "",
   staticFileName: "",
-  packPreviewAnims: [],
+  packPreviewAnims: new Map(),
+  packPreviewCache: new Map(),
+  packObserver: null,
+  packItemsById: new Map(),
+  packHydrateQueue: [],
+  packHydrateRunning: 0,
+  packHydrateMax: 2,
+  packVisibleLimit: 16,
 };
 
 // ── COLOR MATH ──────────────────────────────────────────
@@ -671,38 +710,137 @@ async function loadTelegramPack(){
 }
 
 function clearPackPreviewAnims(){
-  (S.packPreviewAnims||[]).forEach(a=>{try{a.destroy()}catch(e){}});
-  S.packPreviewAnims=[];
+  (S.packPreviewAnims||new Map()).forEach(a=>{try{a.destroy()}catch(e){}});
+  S.packPreviewAnims=new Map();
+  S.packPreviewCache=new Map();
+  S.packItemsById=new Map();
+  S.packHydrateQueue=[];
+  S.packHydrateRunning=0;
+  if(S.packObserver){
+    try{S.packObserver.disconnect()}catch(_e){}
+    S.packObserver=null;
+  }
 }
 
-async function hydratePackCard(it, card){
-  const prev=card.querySelector('.pack-prev');
-  if(!prev) return;
-  if(it.is_video){ prev.textContent='WEBM'; return; }
+function stopPreviewAnimForTile(tile){
+  if(!tile) return;
+  const fileId=tile.dataset.fileId;
+  if(!fileId) return;
+  const anim=S.packPreviewAnims.get(fileId);
+  if(anim){
+    try{anim.destroy()}catch(_e){}
+    S.packPreviewAnims.delete(fileId);
+  }
+}
+
+function rememberPreview(fileId,data){
+  rememberPreview(fileId,data);
+  if(S.packPreviewCache.size>60){
+    const firstKey=S.packPreviewCache.keys().next().value;
+    if(firstKey) S.packPreviewCache.delete(firstKey);
+  }
+}
+
+function trimPreviewAnims(){
+  if(S.packPreviewAnims.size<=S.packVisibleLimit) return;
+  const visibleTiles=new Set(Array.from(document.querySelectorAll('.pack-tile.is-visible')).map(t=>t.dataset.fileId));
+  for(const [fileId,anim] of S.packPreviewAnims.entries()){
+    if(S.packPreviewAnims.size<=S.packVisibleLimit) break;
+    if(visibleTiles.has(fileId)) continue;
+    try{anim.destroy()}catch(_e){}
+    S.packPreviewAnims.delete(fileId);
+  }
+}
+
+async function fetchPackPreview(fileId){
+  if(S.packPreviewCache.has(fileId)) return S.packPreviewCache.get(fileId);
+  const r=await fetch('/api/telegram/item-preview',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({file_id:fileId})
+  });
+  const data=await r.json().catch(()=>({ok:false,error:'invalid json'}));
+  if(!r.ok || !data.ok){
+    throw new Error(data.error||'preview error');
+  }
+  rememberPreview(fileId,data);
+  return data;
+}
+
+async function hydratePackTile(tile){
+  if(!tile || tile.dataset.hydrated==='1' || tile.dataset.loading==='1') return;
+  const fileId=tile.dataset.fileId;
+  const prev=tile.querySelector('.pack-prev');
+  if(!fileId || !prev) return;
+  const it=S.packItemsById.get(fileId);
+  if(it && it.is_video){
+    prev.textContent='WEBM';
+    tile.dataset.hydrated='1';
+    return;
+  }
+
+  tile.dataset.loading='1';
+  prev.textContent='...';
   try{
-    const r=await fetch('/api/telegram/item-preview',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({file_id:it.file_id})
-    });
-    const data=await r.json();
-    if(!r.ok||!data.ok){ prev.textContent='Error'; return; }
+    const data=await fetchPackPreview(fileId);
     if(data.mode==='animated' && data.json){
       prev.innerHTML='';
+      stopPreviewAnimForTile(tile);
       const a=lottie.loadAnimation({container:prev,renderer:'svg',loop:true,autoplay:true,animationData:data.json});
-      S.packPreviewAnims.push(a);
-      return;
-    }
-    if(data.mode==='static' && data.dataUrl){
+      S.packPreviewAnims.set(fileId,a);
+      trimPreviewAnims();
+    } else if(data.mode==='static' && data.dataUrl){
       const img=document.createElement('img');
       img.src=data.dataUrl;
       img.alt='preview';
       prev.innerHTML='';
       prev.appendChild(img);
-      return;
+    } else {
+      prev.textContent=(data.mode||'unsupported').toUpperCase();
     }
-    prev.textContent=(data.mode||'unsupported').toUpperCase();
-  }catch(_e){ prev.textContent='Error'; }
+    tile.dataset.hydrated='1';
+  } catch(_e){
+    prev.textContent='Error';
+  } finally {
+    tile.dataset.loading='0';
+  }
+}
+
+function processPackHydrateQueue(){
+  if(S.packHydrateRunning>=S.packHydrateMax) return;
+  const next=S.packHydrateQueue.shift();
+  if(!next) return;
+  S.packHydrateRunning++;
+  hydratePackTile(next).finally(()=>{
+    S.packHydrateRunning--;
+    processPackHydrateQueue();
+  });
+  processPackHydrateQueue();
+}
+
+function queueHydrate(tile){
+  if(!tile || tile.dataset.hydrated==='1' || tile.dataset.loading==='1') return;
+  if(S.packHydrateQueue.includes(tile)) return;
+  S.packHydrateQueue.push(tile);
+  processPackHydrateQueue();
+}
+
+function setupPackObserver(rootEl){
+  if(S.packObserver){
+    try{S.packObserver.disconnect()}catch(_e){}
+  }
+  S.packObserver=new IntersectionObserver((entries)=>{
+    entries.forEach((entry)=>{
+      const tile=entry.target;
+      if(entry.isIntersecting){
+        tile.classList.add('is-visible');
+        queueHydrate(tile);
+      } else {
+        tile.classList.remove('is-visible');
+      }
+    });
+    trimPreviewAnims();
+  },{root:rootEl,rootMargin:'240px',threshold:0.01});
 }
 
 function renderPackList(pack){
@@ -719,16 +857,21 @@ function renderPackList(pack){
   grid.className='pack-grid';
   list.appendChild(grid);
 
+  setupPackObserver(list);
+
   pack.items.forEach((it,idx)=>{
     const card=document.createElement('button');
     card.type='button';
     card.className='pack-tile';
+    card.dataset.fileId=it.file_id;
     card.title=`${idx+1}. ${(it.emoji||'🙂')} · ${it.type}`;
-    card.innerHTML='<div class="pack-prev">...</div>';
+    card.innerHTML='<div class="pack-prev"></div>';
     if(it.is_video) card.classList.add('is-video');
     card.addEventListener('click',()=>loadPackItem(it.file_id));
+    card.addEventListener('mouseenter',()=>queueHydrate(card));
     grid.appendChild(card);
-    if(idx<84) setTimeout(()=>hydratePackCard(it, card), idx*20);
+    S.packItemsById.set(it.file_id,it);
+    if(S.packObserver) S.packObserver.observe(card);
   });
 }
 
@@ -1373,6 +1516,7 @@ function showStatus(){
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 
 // ── INIT ─────────────────────────────────────────────────
+applySvgIcons();
 updateStageSize();
 syncClr($('colorInput'),$('colorSwatch'),$('colorHexEdit'),'#ffffff');
 syncClr($('strokeColorInput'),$('strokeSwatch'),$('strokeHexEdit'),'#000000');
@@ -1383,6 +1527,17 @@ restoreProject();
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
 
 
 
