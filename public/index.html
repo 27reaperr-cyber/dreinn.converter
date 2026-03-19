@@ -62,11 +62,7 @@
             <span class="inp-ico">URL</span>
             <input type="text" id="tgPackUrl" placeholder="https://t.me/addemoji/... or https://t.me/addstickers/...">
           </div>
-          <div class="plbl">Bot Token (optional, or use TELEGRAM_BOT_TOKEN env)</div>
-          <div class="inp-wrap" style="margin-bottom:8px">
-            <span class="inp-ico">TOKEN</span>
-            <input type="password" id="tgBotToken" placeholder="123456:ABC...">
-          </div>
+          <div class="fpick-sub" style="text-align:left;margin:0 0 8px 0">Используется только TELEGRAM_BOT_TOKEN из Environment Variables</div>
           <button class="btn btn-blue" id="tgLoadPack">Load Pack</button>
           <div class="fpick-sub" id="tgPackMeta" style="margin-top:8px">Paste link and click Load Pack</div>
         </div>
@@ -152,6 +148,19 @@
           <button class="align-btn" data-weight="normal" title="Обычный"></button>
           <button class="align-btn" id="shadowBtn" title="Тень"></button>
           <button class="align-btn" id="behindBtn" title="За объектом — текст под стикером"></button>
+        </div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div class="plbl">Позиция текста</div>
+        <div class="prow" style="margin-bottom:6px">
+          <div class="pi">
+            <div class="plbl">Horizontal: <span id="posXLabel">50%</span></div>
+            <input type="range" id="posX" min="0" max="100" value="50">
+          </div>
+          <div class="pi">
+            <div class="plbl">Vertical: <span id="posYLabel">25%</span></div>
+            <input type="range" id="posY" min="0" max="100" value="25">
+          </div>
         </div>
       </div>
       <div style="margin-bottom:8px">
@@ -527,9 +536,7 @@ function snapshotState(){
     exportWidth:S.exportWidth,
     exportHeight:S.exportHeight,
     stickerScale:S.stickerScale,
-    tgPackUrl:$('tgPackUrl') ? $('tgPackUrl').value : '',
-    tgBotToken:$('tgBotToken') ? $('tgBotToken').value : '',
-    fileName:$('fdName') ? $('fdName').textContent : 'project.json',
+    tgPackUrl:$('tgPackUrl') ? $('tgPackUrl').value : '',    fileName:$('fdName') ? $('fdName').textContent : 'project.json',
     staticImageDataUrl:S.staticImageDataUrl,
     staticFileName:S.staticFileName
   };
@@ -618,8 +625,7 @@ function restoreProject(){
     $('exportHeight').value=S.exportHeight;
     $('stickerScale').value=Math.round(S.stickerScale*100);
     $('stickerScaleLabel').textContent=Math.round(S.stickerScale*100)+'%';
-    if($('tgPackUrl')) $('tgPackUrl').value=s.tgPackUrl||'';
-    if($('tgBotToken')) $('tgBotToken').value=s.tgBotToken||'';
+    if(tgPackUrl) tgPackUrl.value=s.tgPackUrl||'';
     syncClr($('bgColorInput'),$('bgColorSwatch'),$('bgHexEdit'),S.bgColor);
     syncClr($('bgColor2Input'),$('bgColor2Swatch'),$('bgHex2Edit'),S.bgColor2);
     $('bgOpacity').value=Math.round(S.bgOpacity*100);
@@ -654,14 +660,13 @@ function loadFile(file) {
 
 async function loadTelegramPack(){
   const url=($('tgPackUrl').value||'').trim();
-  const token=($('tgBotToken').value||'').trim();
   if(!url){ showToast('warn','Paste pack URL first'); return; }
   $('tgPackMeta').textContent='Loading pack...';
-  const r=await fetch('/api/telegram/pack',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,token})});
+  const r=await fetch('/api/telegram/pack',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
   const data=await r.json();
   if(!r.ok||!data.ok){ showToast('error',data.error||'Pack loading error'); $('tgPackMeta').textContent='Pack loading error'; return; }
-  renderPackList(data, token);
-  $('tgPackMeta').textContent=`${data.title} - ${data.count} items`; 
+  renderPackList(data);
+  $('tgPackMeta').textContent=`${data.title} - ${data.count} items`;
   markDirty();
 }
 
@@ -670,7 +675,7 @@ function clearPackPreviewAnims(){
   S.packPreviewAnims=[];
 }
 
-async function hydratePackCard(it, card, token){
+async function hydratePackCard(it, card){
   const prev=card.querySelector('.pack-prev');
   if(!prev) return;
   if(it.is_video){ prev.textContent='WEBM'; return; }
@@ -678,7 +683,7 @@ async function hydratePackCard(it, card, token){
     const r=await fetch('/api/telegram/item-preview',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({file_id:it.file_id,token:($('tgBotToken').value||token||'').trim()})
+      body:JSON.stringify({file_id:it.file_id})
     });
     const data=await r.json();
     if(!r.ok||!data.ok){ prev.textContent='Error'; return; }
@@ -700,25 +705,36 @@ async function hydratePackCard(it, card, token){
   }catch(_e){ prev.textContent='Error'; }
 }
 
-function renderPackList(pack, token){
+function renderPackList(pack){
   const list=$('tgPackList');
   clearPackPreviewAnims();
   list.innerHTML='';
+
+  const title=document.createElement('div');
+  title.className='pack-title';
+  title.textContent=pack.title||pack.set_name||'Telegram Pack';
+  list.appendChild(title);
+
+  const grid=document.createElement('div');
+  grid.className='pack-grid';
+  list.appendChild(grid);
+
   pack.items.forEach((it,idx)=>{
     const card=document.createElement('button');
     card.type='button';
-    card.className='pack-card';
-    card.innerHTML='<div class="pack-prev">...</div><div class="pack-info"><div class="pack-top">'+(idx+1)+'. '+(it.emoji||':)')+'<span>'+it.type+'</span></div><div class="pack-sub">'+(it.width||0)+'x'+(it.height||0)+(it.is_video?' | WEBM':'')+'</div></div>';
+    card.className='pack-tile';
+    card.title=`${idx+1}. ${(it.emoji||'🙂')} · ${it.type}`;
+    card.innerHTML='<div class="pack-prev">...</div>';
     if(it.is_video) card.classList.add('is-video');
-    card.addEventListener('click',()=>loadPackItem(it.file_id, token));
-    list.appendChild(card);
-    if(idx<18) setTimeout(()=>hydratePackCard(it, card, token), idx*40);
+    card.addEventListener('click',()=>loadPackItem(it.file_id));
+    grid.appendChild(card);
+    if(idx<84) setTimeout(()=>hydratePackCard(it, card), idx*20);
   });
 }
 
-async function loadPackItem(fileId, token){
+async function loadPackItem(fileId){
   $('tgPackMeta').textContent='Loading selected item...';
-  const r=await fetch('/api/telegram/item-json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file_id:fileId,token:($('tgBotToken').value||token||'').trim()})});
+  const r=await fetch('/api/telegram/item-json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file_id:fileId})});
   const data=await r.json();
   if(!r.ok||!data.ok){ showToast('error',data.error||'Item loading error'); $('tgPackMeta').textContent='Item loading error'; return; }
   if(data.mode==='animated' && data.json){
@@ -737,8 +753,6 @@ async function loadPackItem(fileId, token){
 
 if($('tgLoadPack')) $('tgLoadPack').addEventListener('click',loadTelegramPack);
 if($('tgPackUrl')) $('tgPackUrl').addEventListener('input',markDirty);
-if($('tgBotToken')) $('tgBotToken').addEventListener('input',markDirty);
-
 // ── LOTTIE (SVG RENDERER FOR PREVIEW) ───────────────────
 function initLottie(data) {
   if(S.anim){try{S.anim.destroy()}catch(e){}S.anim=null}
@@ -844,6 +858,10 @@ function populateEditor(layer) {
   $('boldBtn').classList.toggle('active',!!layer.bold);
   $('shadowBtn').classList.toggle('active',!!layer.shadow);
   $('behindBtn').classList.toggle('active',!!layer.behindObject);
+  $('posX').value=Math.round(layer.x||50);
+  $('posY').value=Math.round(layer.y||25);
+  $('posXLabel').textContent=Math.round(layer.x||50)+'%';
+  $('posYLabel').textContent=Math.round(layer.y||25)+'%';
   $('motionX').value=layer.motionX||0;
   $('motionY').value=layer.motionY||0;
   $('motionXLabel').textContent=(layer.motionX||0)+'%';
@@ -868,10 +886,8 @@ function renderTextNode(layer) {
   el.textContent=layer.text||'';
   const h=document.createElement('div'); h.className='resize-h'; el.appendChild(h);
   el.addEventListener('mousedown',e=>{
-    if(e.target===h)return; e.preventDefault();
+    if(e.target===h)return;
     setActiveLayer(layer.id); renderLayersList();
-    const rect=$('stage').getBoundingClientRect();
-    S.dragging={id:layer.id,startX:e.clientX,startY:e.clientY,origX:layer.x,origY:layer.y,stageW:rect.width,stageH:rect.height};
   });
   h.addEventListener('mousedown',e=>{
     e.preventDefault(); e.stopPropagation(); const sy=e.clientY,os=layer.size;
@@ -883,16 +899,20 @@ function renderTextNode(layer) {
   container.appendChild(el);
 }
 
-document.addEventListener('mousemove',e=>{
-  if(!S.dragging)return;
-  const d=S.dragging, layer=S.layers.find(l=>l.id===d.id); if(!layer)return;
-  layer.x=Math.max(0,Math.min(100,d.origX+((e.clientX-d.startX)/d.stageW)*100));
-  layer.y=Math.max(0,Math.min(100,d.origY+((e.clientY-d.startY)/d.stageH)*100));
-  renderTextNode(layer);
+// ── POSITION + MOTION CONTROLS ─────────────────────────
+$('posX').addEventListener('input',()=>{
+  const l=getActive(); if(!l) return;
+  l.x=parseInt($('posX').value,10)||0;
+  $('posXLabel').textContent=l.x+'%';
+  renderTextNode(l);
 });
-document.addEventListener('mouseup',()=>{S.dragging=null});
+$('posY').addEventListener('input',()=>{
+  const l=getActive(); if(!l) return;
+  l.y=parseInt($('posY').value,10)||0;
+  $('posYLabel').textContent=l.y+'%';
+  renderTextNode(l);
+});
 
-// ── ATTACH TO OBJECT ─────────────────────────────────────
 // ── TEXT MOTION ─────────────────────────────────────
 $('motionX').addEventListener('input',()=>{
   const l=getActive(); if(!l) return;
@@ -1223,37 +1243,101 @@ $('exportPng').addEventListener('click',async()=>{
   canvas.toBlob(blob=>{if(blob)dlBlob(blob,`emoji_f${f+1}_${w}x${h}.png`,'image/png');hideExp();showStatus()},'image/png');
 });
 
-// ── GIF EXPORT (gif.js) ─────────────────────────────────
-$('exportGif').addEventListener('click',async()=>{
-  if(!S.lottieData && !S.staticImageDataUrl){ showToast('error','Загрузите файл');return}
-  if(typeof GIF==='undefined'){ showToast('error','GIF engine not loaded'); return }
-  const w=S.exportWidth,h=S.exportHeight;
-  const total=getFrameTotal();
-  const frameDelay=Math.max(16,Math.round(1000/Math.max(1,S.fps)));
+// ── GIF EXPORT (gif.js + auto-compress < 2MB) ───────────
+const GIF_TARGET_BYTES = 2 * 1024 * 1024;
+const GIF_TARGET_FPS = 60;
+const GIF_FRAME_DELAY = Math.round(1000 / GIF_TARGET_FPS);
 
-  showExp('Экспорт GIF', w + '×' + h + ' · Инициализация...');
-  await setupExportEngine(w,h);
-  if(S.cancelled)return;
+function bytesToMb(bytes){
+  return (bytes / (1024 * 1024)).toFixed(2);
+}
 
-  const gif=new GIF({workers:2,quality:10,width:w,height:h,workerScript:'./vendor/gif.worker.js'});
+async function encodeGifAttempt({width,height,outFrames,srcFrames,quality,attemptIndex,attemptTotal}){
+  await setupExportEngine(width,height);
+  if(S.cancelled) return null;
 
-  for(let f=0;f<total;f++){
-    if(S.cancelled){ try{gif.abort()}catch(e){} hideExp(); return; }
-    const canvas=await captureFrame(f,w,h);
-    gif.addFrame(canvas,{copy:true,delay:frameDelay});
-    updExp((f/total)*85,'Кадр ' + (f+1) + ' / ' + total);
+  const gif=new GIF({workers:2,quality,width,height,workerScript:'./vendor/gif.worker.js'});
+  for(let f=0;f<outFrames;f++){
+    if(S.cancelled){ try{gif.abort()}catch(e){} return null; }
+    const srcFrame = srcFrames <= 1 || outFrames <= 1 ? 0 : Math.round((f/(outFrames-1))*(srcFrames-1));
+    const canvas=await captureFrame(srcFrame,width,height);
+    gif.addFrame(canvas,{copy:true,delay:GIF_FRAME_DELAY});
+    const base=((attemptIndex-1)/attemptTotal)*80;
+    const span=(1/attemptTotal)*80;
+    updExp(base + (f/outFrames)*span,`Попытка ${attemptIndex}/${attemptTotal} · кадр ${f+1}/${outFrames}`);
     await sleep(0);
   }
 
-  updExp(90,'Кодирование...');
-  const blob=await new Promise((resolve,reject)=>{
+  updExp(82 + (attemptIndex/attemptTotal)*15,`Кодирование попытки ${attemptIndex}/${attemptTotal}...`);
+  return await new Promise((resolve,reject)=>{
     gif.on('finished',resolve);
     gif.on('abort',()=>reject(new Error('aborted')));
     try{ gif.render(); }catch(err){ reject(err); }
-  }).catch(err=>{ if(!S.cancelled) showToast('error','Ошибка GIF: '+err.message); return null; });
+  }).catch(err=>{ if(!S.cancelled) console.warn('GIF attempt failed:', err); return null; });
+}
 
-  if(blob) dlBlob(blob,'emoji_' + w + 'x' + h + '.gif','image/gif');
-  hideExp(); showStatus();
+$('exportGif').addEventListener('click',async()=>{
+  if(!S.lottieData && !S.staticImageDataUrl){ showToast('error','Загрузите файл');return}
+  if(typeof GIF==='undefined'){ showToast('error','GIF engine not loaded'); return }
+
+  const baseW=S.exportWidth, baseH=S.exportHeight;
+  const srcFrames=getFrameTotal();
+  const srcFps=Math.max(1,Math.round(S.fps||60));
+  const durationSec=srcFrames/srcFps;
+  const outFrames=Math.max(1,Math.round(durationSec*GIF_TARGET_FPS));
+
+  const attempts=[
+    {scale:1.00, quality:8},
+    {scale:0.92, quality:10},
+    {scale:0.85, quality:12},
+    {scale:0.78, quality:14},
+    {scale:0.70, quality:16},
+    {scale:0.62, quality:20}
+  ];
+
+  showExp('Экспорт GIF', `${baseW}×${baseH} · 60 FPS · авто-сжатие до <2MB`);
+
+  let winner=null;
+  let smallest=null;
+
+  for(let i=0;i<attempts.length;i++){
+    if(S.cancelled){ hideExp(); return; }
+    const attempt=attempts[i];
+    const width=Math.max(160,Math.round(baseW*attempt.scale));
+    const height=Math.max(160,Math.round(baseH*attempt.scale));
+    const blob=await encodeGifAttempt({
+      width,
+      height,
+      outFrames,
+      srcFrames,
+      quality:attempt.quality,
+      attemptIndex:i+1,
+      attemptTotal:attempts.length
+    });
+    if(!blob) continue;
+
+    const candidate={blob,width,height,quality:attempt.quality,bytes:blob.size};
+    if(!smallest || candidate.bytes < smallest.bytes) smallest=candidate;
+    if(candidate.bytes<=GIF_TARGET_BYTES){ winner=candidate; break; }
+  }
+
+  const finalResult=winner||smallest;
+  if(!finalResult){
+    hideExp();
+    showToast('error','Не удалось закодировать GIF');
+    return;
+  }
+
+  updExp(100,'Сохранение...');
+  dlBlob(finalResult.blob,`emoji_${finalResult.width}x${finalResult.height}_60fps.gif`,'image/gif');
+  hideExp();
+  showStatus();
+
+  if(winner){
+    showToast('success',`GIF готов: ${bytesToMb(finalResult.bytes)} MB, 60 FPS`);
+  } else {
+    showToast('warn',`Минимальный размер: ${bytesToMb(finalResult.bytes)} MB (>2MB). Попробуйте меньшее разрешение.`,4200);
+  }
 });
 // ── EXPORT JSON / TGS ────────────────────────────────────
 $('exportJson').addEventListener('click',()=>{
@@ -1299,6 +1383,17 @@ restoreProject();
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
 
 
 

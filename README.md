@@ -33,10 +33,7 @@ npm run dev
 - `https://t.me/addstickers/...`
 - `https://t.me/addemoji/...`
 
-Есть 2 варианта авторизации:
-
-1. Ввести `Bot Token` в UI (поле в блоке импорта)
-2. Или задать переменную окружения `TELEGRAM_BOT_TOKEN`
+Авторизация для импорта Telegram паков только через переменную окружения `TELEGRAM_BOT_TOKEN`.
 
 Пример для PowerShell (текущая сессия):
 
@@ -52,9 +49,9 @@ npm run dev
 
 ## Что добавлено
 
-- Исправлен GIF экспорт: стабильный покадровый рендер (стикер не пропадает)
+- Исправлен GIF экспорт: покадровый рендер всех кадров, 60 FPS и авто-сжатие (цель < 2MB)
 - `Sticker Scale` перенесен в раздел `Экспорт`
-- Ребрендинг в `dreinn.converter` + SVG логотип
+- Ребрендинг в `dreinn.converter` (текстовый логотип в шапке)
 - Добавлена Telegram ссылка: `t.me/dreinnh`
 - Автосохранение процесса в `localStorage` + авто-восстановление
 - Импорт Telegram пака по ссылке, список элементов и выбор для загрузки
@@ -87,7 +84,8 @@ vercel --prod
 
 - `public/index.html` — интерфейс и логика редактора
 - `public/styles.css` — стили
-- `public/assets/icons/*.svg` — SVG-иконки
 - `server.js` — Node.js сервер + Telegram API proxy endpoints
 - `scripts/copy-lottie.js` — копирование vendor-файлов
 - `vercel.json` — конфиг деплоя
+
+
